@@ -12,7 +12,7 @@ Parameters:
     AllowedValues:
       - "false"
       - "true"
-    Default: "false"
+    Default: "true"
     Description: "Required - Allow Systems Manager (SSM) shell access from Sagemaker notebooks.  Must also be set to true on SageMaker CloudFormation stacks."
     Type: "String"
 
@@ -337,34 +337,25 @@ Parameters:
     Description: "Required"
     Type: "String"
 
-  pIngressCidr:
-    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
-    Description: "Required - Must be a CIDR.  Use /32 for a single IP.  Allows full network ingress to ALL EMR nodes.  Example uses would be VPC or VPN/Office access."
-    Type: "String"
-
-  pKeyName:
-    Description: "Required"
-    Type: "AWS::EC2::KeyPair::KeyName"
-
   pKmsEbsArn:
     Description: "Optional - if the source AMI is encrypted specify the full key ARN.  Otherwise, leave blank.  This does NOT automatically enable EBS encryption."
     Default: ""
     Type: "String"
 
-  pLivyIngressCidr:
-    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
-    Description: "Required - CIDR will be allowed access to the master node on port 8998.  Example use would be the CIDR containing a SageMaker Notebook instance."
-    Type: "String"
+  pLivyAccessSecurityGroup:
+    Description: "Required - Security Group ID that will be allowed access to the master node on port 8998."
+    Default: "/hail/sagemaker/security-group-id"
+    Type: "AWS::SSM::Parameter::Value<String>"
 
   pS3LogBucket:
     Description: "Required - This parameter is set by the S3 stack.  No changes should be necessary.  Cluster logs will be stored here."
-    Type: "AWS::SSM::Parameter::Value<String>"
     Default: "/hail/s3/emrlogs"
+    Type: "AWS::SSM::Parameter::Value<String>"
 
   pS3HailBucket:
     Description: "Required - This parameter is set by the S3 stack.  No changes should be necessary.  Cluster Manifests will be put here on cluster launch under /manifests."
-    Type: "AWS::SSM::Parameter::Value<String>"
     Default: "/hail/s3/hail"
+    Type: "AWS::SSM::Parameter::Value<String>"
 
   pSubnetId:
     Description: "Required - nodes will be deployed in this subnet."
@@ -412,15 +403,13 @@ Metadata:
         Parameters:
           - "pVpcId"
           - "pSubnetId"
-          - "pIngressCidr"
-          - "pLivyIngressCidr"
+          - "pLivyAccessSecurityGroup"
       - Label:
           default: "Cluster Primary Settings"
         Parameters:
           - "pAmi"
           - "pClusterName"
           - "pEmrReleaseLabel"
-          - "pKeyName"
           - "pEmrInstanceRootVolSize"
           - "pKmsEbsArn"
           - "pS3LogBucket"
@@ -474,14 +463,10 @@ Metadata:
         default: "Maximum number of Task Nodes"
       pEmrTaskNodeSize:
         default: "Task Node Size"
-      pIngressCidr:
-        default: "Ingress CIDR"
-      pKeyName:
-        default: "Instance KeyPair"
       pKmsEbsArn:
         default: "EBS KMS Key ARN"
-      pLivyIngressCidr:
-        default: "Livy Access CIDR"
+      pLivyAccessSecurityGroup:
+        default: "Livy Access Security Group"
       pS3LogBucket:
         default: "SSM Parameter for EMR Log Bucket"
       pS3HailBucket:
@@ -497,12 +482,10 @@ Metadata:
       pVpcId:
         default: "VPC ID"
 
-
 Conditions:
 
   CondEnableEncryption: !Not [ !Equals [ !Ref pKmsEbsArn, "" ] ]
   CondCreateTaskNodes:  !Not [ !Equals [ !Ref pEmrMaxTaskNodeCount, "0" ] ]
-
 
 Resources:
 
@@ -565,7 +548,6 @@ Resources:
           - !Ref sgEmrMasterAccess
         AdditionalSlaveSecurityGroups:
           - !Ref sgEmrSlaveAccess
-        Ec2KeyName: !Ref pKeyName
         Ec2SubnetId: !Ref pSubnetId
         MasterInstanceGroup:
           InstanceCount: 1
@@ -857,20 +839,15 @@ Resources:
       GroupDescription: "emr master node access"
       VpcId: !Ref pVpcId
       SecurityGroupIngress:
-        - IpProtocol: "-1"
-          FromPort: -1
-          ToPort: -1
-          CidrIp: !Ref pIngressCidr
-          Description: "Full Ingress"
         - IpProtocol: "tcp"
           FromPort: 8998
           ToPort: 8998
-          CidrIp: !Ref pLivyIngressCidr
+          SourceSecurityGroupId: !Ref pLivyAccessSecurityGroup
           Description: "Livy Access"
         - IpProtocol: "tcp"
           FromPort: 80
           ToPort: 80
-          CidrIp: !Ref pLivyIngressCidr
+          SourceSecurityGroupId: !Ref pLivyAccessSecurityGroup
           Description: "HTTP for notebook Hail plot retrieval"
         - IpProtocol: "-1"
           FromPort: -1
@@ -899,12 +876,6 @@ Resources:
       GroupName: !Join ["-",["emr-slave", !Ref pClusterName]]
       GroupDescription: "emr slave node access"
       VpcId: !Ref pVpcId
-      SecurityGroupIngress:
-        - IpProtocol: "-1"
-          FromPort: -1
-          ToPort: -1
-          CidrIp: !Ref pIngressCidr
-          Description: "Full Ingress"
       SecurityGroupEgress:
         - IpProtocol: "-1"
           FromPort: -1

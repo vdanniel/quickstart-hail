@@ -1,6 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "SageMaker Jupyter Instance for use with Hail on EMR"
-
+Description: "SageMaker Jupter Notebook Instance for use with Hail on EMR"
 
 Parameters:
 
@@ -10,11 +9,6 @@ Parameters:
       - "true"
     Default: "false"
     Description: "Required - Allow Systems Manager (SSM) shell access to EMR nodes.  Must also be set to true on EMR CloudFormation stacks."
-    Type: "String"
-
-  pIngressCidr:
-    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
-    Description: "Required - CIDR is allowed full security group ingress.  Examples - VPC CIDR, VPN CIDR, etc."
     Type: "String"
 
   pInstanceType:
@@ -32,7 +26,7 @@ Parameters:
     Type: "String"
 
   pName:
-    Description: "Required - Used as the name of the notebook instance and S3 backup location.  Recommend username.  Example: aperry"
+    Description: "Required - Used as the name of the notebook instance and S3 backup location.  Recommend username.  Example: jdoe"
     Type: "String"
 
   pS3bucketJupyter:
@@ -74,9 +68,10 @@ Parameters:
     MinValue: "5"
     Type: "Number"
 
-  pVpcId:
-    Description: "Required - Notebook is deployed in this VPC."
-    Type: "AWS::EC2::VPC::Id"
+  pSgSagemaker:
+    Description: "Required - This parameter is set by the hail-core stack.  No changes should be necessary.  This security group ID will be attached to the notebook instance."
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "/hail/sagemaker/security-group-id"
 
 
 Metadata:
@@ -86,9 +81,8 @@ Metadata:
       - Label:
           default: "Network Details"
         Parameters:
-          - "pVpcId"
           - "pSubnetId"
-          - "pIngressCidr"
+          - "pSgSagemaker"
       - Label:
           default: "Instance Details"
         Parameters:
@@ -109,12 +103,8 @@ Metadata:
     ParameterLabels:
       pAllowSsmShell:
         default: "Allow SSM Shell Access to EMR Nodes"
-      pVpcId:
-        default: "VPC ID"
       pSubnetId:
         default: "Subnet ID"
-      pIngressCidr:
-        default: "Ingress CIDR"
       pName:
         default: "Instance Name"
       pInstanceType:
@@ -125,11 +115,12 @@ Metadata:
         default: "SSM Parameter for Hail Bucket"
       pS3bucketJupyter:
         default: "SSM Parameter for SageMaker Bucket"
+      pSgSagemaker:
+        default: "SSM Parameter for SageMaker Security Group ID"
       pTagOwner:
         default: "Owner"
       pTagEnvironment:
         default: "Environment"
-
 
 Conditions:
 
@@ -149,7 +140,7 @@ Resources:
       SubnetId: !Ref pSubnetId
       VolumeSizeInGB: !Ref pVolumeSize
       SecurityGroupIds:
-        - !Ref sg
+        - !Ref pSgSagemaker
       Tags:
         - Key: "Name"
           Value: !Ref pName
@@ -313,28 +304,3 @@ Resources:
       PolicyName: "ssm-session-by-tag"
       Roles:
         - !Ref role
-
-  sg:
-    Type: "AWS::EC2::SecurityGroup"
-    Properties:
-      VpcId: !Ref pVpcId
-      GroupDescription: "Security group for Sagemaker Notebook to connect to Hail cluster."
-      SecurityGroupIngress:
-        - IpProtocol: "-1"
-          FromPort: -1
-          ToPort: -1
-          CidrIp: !Ref pIngressCidr
-          Description: "Full Access"
-      SecurityGroupEgress:
-        - IpProtocol: "-1"
-          FromPort: -1
-          ToPort: -1
-          CidrIp: "0.0.0.0/0"
-          Description: "all"
-      Tags:
-        - Key: "Name"
-          Value: !Sub "sagemaker-jupyter-${pName}"
-        - Key: "environment"
-          Value: !Ref pTagEnvironment
-        - Key: "owner"
-          Value: !Ref pTagOwner

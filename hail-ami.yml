@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "Packer based Hail AMI Creation via AWS Codebuild. Adjust file paths in individual build Projects"
 
-
 Parameters:
 
   pKmsEbsArn:
@@ -24,7 +23,6 @@ Parameters:
     Description: "Required - S3 Key where you will upload the Packer Zip for new AMI builds in the Hail Bucket."
     Type: "String"
 
-
 Metadata:
 
   AWS::CloudFormation::Interface:
@@ -46,11 +44,9 @@ Metadata:
       pS3packerZipLocation:
         default: "Packer Zip S3 Location"
 
-
 Conditions:
 
   CondEnableEncryption: !Not [ !Equals [ !Ref pKmsEbsArn, "" ] ]
-
 
 Resources:
 

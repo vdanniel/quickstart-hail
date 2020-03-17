@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "Hail S3 Resources"
 
-
 Parameters:
 
   pHailBucket:
@@ -79,8 +78,6 @@ Resources:
       Tags:
         - Key: "environment"
           Value: !Ref pTagEnvironment
-        - Key: "managed-by"
-          Value: "cloudformation"
         - Key: "owner"
           Value: !Ref pTagOwner
 
@@ -91,7 +88,6 @@ Resources:
       Name: "/hail/s3/emrlogs"
       Tags:
         environment: !Ref pTagEnvironment
-        managed-by: "cloudformation"
         owner: !Ref pTagOwner
       Type: "String"
       Value: !Ref logBucket
@@ -107,8 +103,6 @@ Resources:
       Tags:
         - Key: "environment"
           Value: !Ref pTagEnvironment
-        - Key: "managed-by"
-          Value: "cloudformation"
         - Key: "owner"
           Value: !Ref pTagOwner
 
@@ -119,7 +113,6 @@ Resources:
       Name: "/hail/s3/sagemaker"
       Tags:
         environment: !Ref pTagEnvironment
-        managed-by: "cloudformation"
         owner: !Ref pTagOwner
       Type: "String"
       Value: !Ref sagemakerBucket
@@ -135,8 +128,6 @@ Resources:
       Tags:
         - Key: "environment"
           Value: !Ref pTagEnvironment
-        - Key: "managed-by"
-          Value: "cloudformation"
         - Key: "owner"
           Value: !Ref pTagOwner
 
@@ -147,19 +138,6 @@ Resources:
       Name: "/hail/s3/hail"
       Tags:
         environment: !Ref pTagEnvironment
-        managed-by: "cloudformation"
         owner: !Ref pTagOwner
       Type: "String"
       Value: !Ref pHailBucket
-
-  rodaBucketParameter:
-    Type: "AWS::SSM::Parameter"
-    Properties:
-      Description: "Registry of Open Data Hail S3 Bucket.  Contains VEP and LOFTEE data."
-      Name: "/hail/s3/roda"
-      Tags:
-        environment: !Ref pTagEnvironment
-        managed-by: "cloudformation"
-        owner: !Ref pTagOwner
-      Type: "String"
-      Value: "hail-vep-pipeline"
