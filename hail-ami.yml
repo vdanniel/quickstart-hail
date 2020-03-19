@@ -9,31 +9,66 @@ Parameters:
     Type: "String"
 
   pS3bucketHail:
-    Description: "Required - This parameter is set by the S3 stack.  No changes should be necessary.  You will upload Packer zip files here."
-    Type: "AWS::SSM::Parameter::Value<String>"
-    Default: "/hail/s3/hail"
+    Description: "Required - You will upload Packer zip files here."
+    Type: "String"
 
   pS3bucketRodaHail:
     Description: "Required - This parameter is set by the S3 stack.  No changes should be necessary.  Contains VEP and LOFTEE files."
-    Type: "AWS::SSM::Parameter::Value<String>"
-    Default: "/hail/s3/roda"
+    Type: "String"
 
   pS3packerZipLocation:
     Default: "ami/packer.zip"
     Description: "Required - S3 Key where you will upload the Packer Zip for new AMI builds in the Hail Bucket."
     Type: "String"
 
+  pSubnetId:
+    Description: "Required - CodeBuild builds will be executed in this subnet."
+    Type: "AWS::EC2::Subnet::Id"
+
+  pVpcId:
+    Description: "Required"
+    Type: "AWS::EC2::VPC::Id"
+
+  pTagEnvironment:
+    AllowedValues:
+      - "production"
+      - "staging"
+      - "sandbox"
+      - "test"
+      - "development"
+      - "qa"
+      - "dr"
+    Default: "development"
+    Description: "Optional - Environment type for default resource tagging."
+    Type: "String"
+
+  pTagOwner:
+    Type: "String"
+    Description: "Optional - Owner of the resources.  Person/Department, etc."
+    Default: ""
+
+
 Metadata:
 
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Settings"
+          default: "Network Settings"
+        Parameters:
+          - "pVpcId"
+          - "pSubnetId"
+      - Label:
+          default: "General Settings"
         Parameters:
           - "pS3bucketHail"
           - "pS3packerZipLocation"
           - "pS3bucketRodaHail"
           - "pKmsEbsArn"
+      - Label:
+          default: "Tagging"
+        Parameters:
+          - "pTagEnvironment"
+          - "pTagOwner"
     ParameterLabels:
       pKmsEbsArn:
         default: "EBS KMS Key ARN"
@@ -43,12 +78,37 @@ Metadata:
         default: "SSM Parameter for the Hail Bucket"
       pS3packerZipLocation:
         default: "Packer Zip S3 Location"
+      pVpcId:
+        default: "VPC ID"
+      pSubnetId:
+        default: "Subnet ID"
+      pTagOwner:
+        default: "Owner Tag"
+      pTagEnvironment:
+        default: "Environment Tag"
 
 Conditions:
 
   CondEnableEncryption: !Not [ !Equals [ !Ref pKmsEbsArn, "" ] ]
 
 Resources:
+
+  sg:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      VpcId: !Ref pVpcId
+      GroupDescription: "Security group allowing Hail AMI builds egress."
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: -1
+          ToPort: -1
+          CidrIp: "0.0.0.0/0"
+          Description: "all"
+      Tags:
+        - Key: "environment"
+          Value: !Ref pTagEnvironment
+        - Key: "owner"
+          Value: !Ref pTagOwner
 
   hailVep:
     Type: "AWS::CodeBuild::Project"
@@ -62,21 +122,21 @@ Resources:
           - Name: "CORE_VAR_FILE"
             Type: "PLAINTEXT"
             Value: "builds/emr-5.29.0.vars"
-          - Name: "VPC_VAR_FILE"
-            Type: "PLAINTEXT"
-            Value: "builds/vpcs/YOUR_VPC_VAR_FILE.vars"
           - Name: "HAIL_VERSION"
             Type: "PLAINTEXT"
             Value: "0.2.XX"
           - Name: "VEP_VERSION"
             Type: "PLAINTEXT"
             Value: "XX"
-          - Name: "HAIL_BUCKET"
-            Type: "PLAINTEXT"
-            Value: !Ref pS3bucketHail
           - Name: "RODA_BUCKET"
             Type: "PLAINTEXT"
             Value: !Ref pS3bucketRodaHail
+          - Name: "VPC_ID"
+            Type: "PLAINTEXT"
+            Value: !Ref pVpcId
+          - Name: "SUBNET_ID"
+            Type: "PLAINTEXT"
+            Value: !Ref pSubnetId
         Image: alpine
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"
@@ -86,6 +146,12 @@ Resources:
         BuildSpec: "codebuild/buildspec.yml"
         Location: !Sub "${pS3bucketHail}/${pS3packerZipLocation}"
         Type: "S3"
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref sg
+        Subnets:
+          - !Ref pSubnetId
+        VpcId: !Ref pVpcId
       TimeoutInMinutes: 180
 
   hailNoVep:
@@ -100,15 +166,15 @@ Resources:
           - Name: "CORE_VAR_FILE"
             Type: "PLAINTEXT"
             Value: "builds/emr-5.29.0.vars"
-          - Name: "VPC_VAR_FILE"
-            Type: "PLAINTEXT"
-            Value: "builds/vpcs/YOUR_VPC_VAR_FILE.vars"
           - Name: "HAIL_VERSION"
             Type: "PLAINTEXT"
             Value: "0.2.xx"
-          - Name: "HAIL_BUCKET"
+          - Name: "VPC_ID"
             Type: "PLAINTEXT"
-            Value: !Ref pS3bucketHail
+            Value: !Ref pVpcId
+          - Name: "SUBNET_ID"
+            Type: "PLAINTEXT"
+            Value: !Ref pSubnetId
         Image: alpine
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"
@@ -118,6 +184,12 @@ Resources:
         BuildSpec: "codebuild/buildspec.yml"
         Location: !Sub "${pS3bucketHail}/${pS3packerZipLocation}"
         Type: "S3"
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref sg
+        Subnets:
+          - !Ref pSubnetId
+        VpcId: !Ref pVpcId
       TimeoutInMinutes: 180
 
   hailMasterVep:
@@ -132,18 +204,18 @@ Resources:
           - Name: "CORE_VAR_FILE"
             Type: "PLAINTEXT"
             Value: "builds/emr-5.29.0.vars"
-          - Name: "VPC_VAR_FILE"
-            Type: "PLAINTEXT"
-            Value: "builds/vpcs/YOUR_VPC_VAR_FILE.vars"
           - Name: "VEP_VERSION"
             Type: "PLAINTEXT"
             Value: "XX"
-          - Name: "HAIL_BUCKET"
-            Type: "PLAINTEXT"
-            Value: !Ref pS3bucketHail
           - Name: "RODA_BUCKET"
             Type: "PLAINTEXT"
             Value: !Ref pS3bucketRodaHail
+          - Name: "VPC_ID"
+            Type: "PLAINTEXT"
+            Value: !Ref pVpcId
+          - Name: "SUBNET_ID"
+            Type: "PLAINTEXT"
+            Value: !Ref pSubnetId
         Image: alpine
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"
@@ -153,6 +225,12 @@ Resources:
         BuildSpec: "codebuild/buildspec.yml"
         Location: !Sub "${pS3bucketHail}/${pS3packerZipLocation}"
         Type: "S3"
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref sg
+        Subnets:
+          - !Ref pSubnetId
+        VpcId: !Ref pVpcId
       TimeoutInMinutes: 180
 
   hailMasterNoVep:
@@ -167,12 +245,12 @@ Resources:
           - Name: "CORE_VAR_FILE"
             Type: "PLAINTEXT"
             Value: "builds/emr-5.29.0.vars"
-          - Name: "VPC_VAR_FILE"
+          - Name: "VPC_ID"
             Type: "PLAINTEXT"
-            Value: "builds/vpcs/YOUR_VPC_VAR_FILE.vars"
-          - Name: "HAIL_BUCKET"
+            Value: !Ref pVpcId
+          - Name: "SUBNET_ID"
             Type: "PLAINTEXT"
-            Value: !Ref pS3bucketHail
+            Value: !Ref pSubnetId
         Image: alpine
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"
@@ -182,6 +260,12 @@ Resources:
         BuildSpec: "codebuild/buildspec.yml"
         Location: !Sub "${pS3bucketHail}/${pS3packerZipLocation}"
         Type: "S3"
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref sg
+        Subnets:
+          - !Ref pSubnetId
+        VpcId: !Ref pVpcId
       TimeoutInMinutes: 180
 
   instanceProfileHailPacker:
