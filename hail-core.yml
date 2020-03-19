@@ -60,6 +60,18 @@ Parameters:
     Description: "Optional - Owner of the resources.  Person/Department, etc."
     Default: ""
 
+  pSubnetId:
+    Description: "Required for existing VPC target. Subnet for EMR Cluster and SageMaker Notebook Instances.  Must reside in the existing VPC."
+    Type: "AWS::EC2::Subnet::Id"
+
+  pSubnetType:
+    Description: "Required for existing VPC target. Public subnets deploy resources with public IPs.  Private subnets do not.  Private subnets are recommended."
+    Type: "String"
+    AllowedValues:
+      - "public"
+      - "private"
+    Default: "private"
+
   pVpcId:
     Description: "Required - SageMaker security group is created in this VPC."
     Type: "AWS::EC2::VPC::Id"
@@ -89,6 +101,8 @@ Resources:
         pS3bucketHail: !Ref pHailBucket
         pS3bucketRodaHail: !GetAtt rodaBucketParameter.Value
         pS3packerZipLocation: !Ref pS3packerZipLocation
+        pSubnetId: !Ref pSubnetId
+        pVpcId: !Ref pVpcId
       TimeoutInMinutes: 5
 
   stackServiceCatalog:
@@ -104,8 +118,7 @@ Resources:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
       VpcId: !Ref pVpcId
-      GroupDescription: "Security group for Sagemaker Notebook instances to connect to Hail clusters."
-      GroupName: "hail-sagemaker-emr"
+      GroupDescription: "Security group for SageMaker Notebook instances to connect to Hail clusters."
       SecurityGroupEgress:
         - IpProtocol: "-1"
           FromPort: -1
@@ -113,8 +126,6 @@ Resources:
           CidrIp: "0.0.0.0/0"
           Description: "all"
       Tags:
-        - Key: "Name"
-          Value: "hail-sagemaker-emr"
         - Key: "environment"
           Value: !Ref pTagEnvironment
         - Key: "owner"
@@ -130,6 +141,39 @@ Resources:
         owner: !Ref pTagOwner
       Type: "String"
       Value: !Ref sgSagemaker
+
+  subnetIdParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Description: "Target subnet for Hail EMR cluster and SageMaker notebook instances."
+      Name: "/hail/vpc/subnet-id"
+      Tags:
+        environment: !Ref pTagEnvironment
+        owner: !Ref pTagOwner
+      Type: "String"
+      Value: !Ref pSubnetId
+
+  vpcIdParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Description: "Target VPC for Hail EMR cluster and SageMaker notebook instances."
+      Name: "/hail/vpc/id"
+      Tags:
+        environment: !Ref pTagEnvironment
+        owner: !Ref pTagOwner
+      Type: "String"
+      Value: !Ref pVpcId
+
+  subnetTypeParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Description: "Subnet type, public or private, for Hail resources.  Drives SageMaker notebook networking configuration."
+      Name: "/hail/vpc/subnet-type"
+      Tags:
+        environment: !Ref pTagEnvironment
+        owner: !Ref pTagOwner
+      Type: "String"
+      Value: !Ref pSubnetType
 
   roleLambdaS3seed:
     Type: "AWS::IAM::Role"

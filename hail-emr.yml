@@ -359,7 +359,8 @@ Parameters:
 
   pSubnetId:
     Description: "Required - nodes will be deployed in this subnet."
-    Type: "AWS::EC2::Subnet::Id"
+    Default: "/hail/vpc/subnet-id"
+    Type: "AWS::SSM::Parameter::Value<String>"
 
   pTagEnvironment:
     AllowedValues:
@@ -391,7 +392,8 @@ Parameters:
 
   pVpcId:
     Description: "Required"
-    Type: "AWS::EC2::VPC::Id"
+    Default: "/hail/vpc/id"
+    Type: "AWS::SSM::Parameter::Value<String>"
 
 
 Metadata:

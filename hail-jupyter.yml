@@ -41,7 +41,13 @@ Parameters:
 
   pSubnetId:
     Description: "Required - Target subnet for Notebook server.  Private subnet is strongly suggested as browser access will still be available via the AWS console."
-    Type: "AWS::EC2::Subnet::Id"
+    Default: "/hail/vpc/subnet-id"
+    Type: "AWS::SSM::Parameter::Value<String>"
+
+  pSubnetType:
+    Description: "Required - Target subnet type."
+    Default: "/hail/vpc/subnet-type"
+    Type: "AWS::SSM::Parameter::Value<String>"
 
   pTagEnvironment:
     AllowedValues:
@@ -82,6 +88,7 @@ Metadata:
           default: "Network Details"
         Parameters:
           - "pSubnetId"
+          - "pSubnetType"
           - "pSgSagemaker"
       - Label:
           default: "Instance Details"
@@ -105,6 +112,8 @@ Metadata:
         default: "Allow SSM Shell Access to EMR Nodes"
       pSubnetId:
         default: "Subnet ID"
+      pSubnetType:
+        default: "Subnet Type"
       pName:
         default: "Instance Name"
       pInstanceType:
@@ -125,13 +134,14 @@ Metadata:
 Conditions:
 
   CondAllowSsmShell: !Equals [!Ref pAllowSsmShell, "true"]
+  CondSubnetTypePrivate: !Equals [!Ref pSubnetType, "private"]
 
 Resources:
 
   instance:
     Type: "AWS::SageMaker::NotebookInstance"
     Properties:
-      DirectInternetAccess: "Disabled"
+      DirectInternetAccess: !If [ CondSubnetTypePrivate, "Disabled", "Enabled"]
       InstanceType: !Ref pInstanceType
       RoleArn: !GetAtt role.Arn
       LifecycleConfigName: !GetAtt lifecycleConfiguration.NotebookInstanceLifecycleConfigName
