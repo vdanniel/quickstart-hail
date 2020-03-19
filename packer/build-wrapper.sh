@@ -16,17 +16,18 @@ cat <<EOF
     --vep-version   [Number Version]      - OPTIONAL.  If omitted, VEP will not be included.
     --hail-bucket   [Your S3 Bucket Name] - REQUIRED
     --roda-bucket   [RODA S3 Bucket Name] - REQUIRED
+    --vpc-id        [VPC ID]              - REQUIRED
+    --subnet-id     [Subnet ID]           - REQUIRED
     --var-file      [Full File Path]      - REQUIRED
-    --vpc-var-file  [Full File Path]      - REQUIRED
 
     Example:
 
    build-wrapper.sh --hail-version 0.2.33 \\
                     --vep-version 99 \\
-                    --hail-bucket YOUR_HAIL_BUCKET \\
                     --roda-bucket hail-vep-pipeline \\
                     --var-file builds/emr-5.29.0.vars \\
-                    --vpc-var-file builds/vpcs/account123-vpc01.vars
+                    --vpc-id vpc-99999999 \\
+                    --subnet-id subnet-99999999
 
 EOF
 }
@@ -50,11 +51,6 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
-        --hail-bucket)
-            HAIL_BUCKET="$2"
-            shift
-            shift
-            ;;
         --roda-bucket)
             RODA_BUCKET="$2"
             shift
@@ -65,8 +61,13 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
-        --vpc-var-file)
-            VPC_VAR_FILE="$2"
+        --vpc-id)
+            VPC_ID="$2"
+            shift
+            shift
+            ;;
+        --subnet-id)
+            SUBNET_ID="$2"
             shift
             shift
             ;;
@@ -92,8 +93,8 @@ export AWS_MAX_ATTEMPTS=600  # Builds time out with default value
 packer build --var hail_name_version="$HAIL_NAME_VERSION" \
              --var hail_version="$HAIL_VERSION" \
              --var vep_version="$VEP_VERSION" \
-             --var hail_bucket="$HAIL_BUCKET" \
              --var roda_bucket="$RODA_BUCKET" \
+             --var vpc_id="$VPC_ID" \
+             --var subnet_id="$SUBNET_ID" \
              --var-file="$CORE_VAR_FILE" \
-             --var-file="$VPC_VAR_FILE" \
              amazon-linux.json

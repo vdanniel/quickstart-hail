@@ -1,8 +1,8 @@
 {
   "builders": [{
     "type": "amazon-ebs",
-    "associate_public_ip_address": "true",
-    "ssh_interface": "public_ip",
+    "associate_public_ip_address": "false",
+    "ssh_interface": "private_ip",
     "source_ami_filter": {
       "filters": {
         "virtualization-type": "hvm",
@@ -47,7 +47,6 @@
       "type": "shell",
       "environment_vars": [
         "VEP_VERSION={{user `vep_version`}}",
-        "HAIL_BUCKET={{user `hail_bucket`}}",
         "RODA_BUCKET={{user `roda_bucket`}}"
       ],
       "execute_command": "sudo -S bash -c '{{ .Vars }} {{ .Path }}'",
