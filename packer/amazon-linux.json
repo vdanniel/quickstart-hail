@@ -32,7 +32,7 @@
       "htslib-version": "{{user `htslib_version`}}",
       "managed-by": "packer",
       "packer-version": "{{packer_version}}",
-      "samtools-version": "{{samtools_version}}",
+      "samtools-version": "{{user `samtools_version`}}",
       "source-ami": "{{.SourceAMIName}}",
       "spark-version": "{{user `spark_version`}}",
       "vep-version": "{{user `vep_version`}}"
