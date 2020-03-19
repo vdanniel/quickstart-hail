@@ -60,10 +60,101 @@ Parameters:
     Description: "Optional - Owner of the resources.  Person/Department, etc."
     Default: ""
 
-  pVpcId:
-    Description: "Required - SageMaker security group is created in this VPC."
-    Type: "AWS::EC2::VPC::Id"
+  pTargetVpc:
+    Type: "String"
+    Description: "New will create AWS Quickstart VPC.  For existing VPCs, set the remaining network settings parameters."
+    AllowedValues:
+      - "new"
+      - "existing"
+    Default: "existing"
 
+  pNewVpcCidr:
+    Type: "String"
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+    Description: "Required for new VPC creation - A /16 address space for a new VPC."
+    Default: "10.0.0.0/16"
+
+  pVpcId:
+    Description: "Required for existing VPC target."
+    Type: "String"
+    Default: ""
+
+  pSubnetId:
+    Description: "Required for existing VPC target. Subnet for EMR Cluster and SageMaker Notebook Instances.  Must reside in the existing VPC."
+    Type: "String"
+    Default: ""
+
+  pSubnetType:
+    Description: "Required for existing VPC target. Public subnets deploy resources with public IPs.  Private subnets do not.  Private subnets are recommended."
+    Type: "String"
+    AllowedValues:
+      - "public"
+      - "private"
+    Default: "private"
+
+Metadata:
+
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "AWS Quick Start Configuration"
+        Parameters:
+         - "QSS3BucketName"
+         - "QSS3KeyPrefix"
+      - Label:
+          default: "Network Settings"
+        Parameters:
+          - "pTargetVpc"
+          - "pNewVpcCidr"
+          - "pVpcId"
+          - "pSubnetId"
+          - "pSubnetType"
+      - Label:
+          default: "Settings"
+        Parameters:
+          - "pHailBucket"
+          - "pS3packerZipLocation"
+          - "pKmsEbsArn"
+          - "pSageMakerBucket"
+          - "pLogBucket"
+      - Label:
+          default: "Tagging"
+        Parameters:
+          - "pTagEnvironment"
+          - "pTagOwner"
+    ParameterLabels:
+      QSS3BucketName:
+        default: Quick Start S3 bucket name
+      QSS3KeyPrefix:
+        default: Quick Start S3 key prefix
+      pKmsEbsArn:
+        default: "EBS KMS Key ARN"
+      pS3packerZipLocation:
+        default: "Packer Zip S3 Location"
+      pHailBucket:
+        default: "Hail Bucket Name"
+      pSageMakerBucket:
+        default: "Sagemaker Home Directory Bucket Name"
+      pLogBucket:
+        default: "EMR Log Bucket Name"
+      pTagOwner:
+        default: "Owner Tag"
+      pTagEnvironment:
+        default: "Environment Tag"
+      pTargetVpc:
+        default: "Target VPC"
+      pNewVpcCidr:
+        default: "New VPC CIDR"
+      pVpcId:
+        default: "Existing VPC ID"
+      pSubnetId:
+        default: "Existing Subnet ID"
+      pSubnetType:
+        default: "Existing Subnet Type"
+
+Conditions:
+
+    createVpc: !Equals [!Ref pTargetVpc, "new"]
 
 Resources:
 
@@ -77,9 +168,34 @@ Resources:
         pLogBucket: !Ref pLogBucket
         pS3packerZipLocation: !Ref pS3packerZipLocation
         pSageMakerBucket: !Ref pSageMakerBucket
+        pSubnetId: !If [createVpc, !GetAtt 'vpc.Outputs.PrivateSubnet1AID', !Ref pSubnetId]
+        pSubnetType: !If [createVpc, "private", !Ref pSubnetType]
         pTagEnvironment: !Ref pTagEnvironment
         pTagOwner: !Ref pTagOwner
-        pVpcId: !Ref pVpcId
+        pVpcId: !If [createVpc, !GetAtt 'vpc.Outputs.VPCID', !Ref pVpcId]
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
       TimeoutInMinutes: 5
+
+  vpc:
+    Type: "AWS::CloudFormation::Stack"
+    Condition: createVpc
+    Properties:
+      TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/quickstart-aws-vpc/templates/aws-vpc.template"
+      Parameters:
+        AvailabilityZones: !Join
+        - ','
+        - - !Select
+            - 0
+            - Fn::GetAZs: !Ref 'AWS::Region'
+          - !Select
+            - 1
+            - Fn::GetAZs: !Ref 'AWS::Region'
+        VPCCIDR: !Ref pNewVpcCidr
+        PublicSubnet1CIDR: !Select [ 0, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
+        PrivateSubnet1ACIDR: !Select [ 1, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
+        PrivateSubnet1BCIDR: !Select [ 2, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
+        PublicSubnet2CIDR: !Select [ 3, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
+        PrivateSubnet2ACIDR: !Select [ 4, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
+        PrivateSubnet2BCIDR: !Select [ 5, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
+      TimeoutInMinutes: 10
