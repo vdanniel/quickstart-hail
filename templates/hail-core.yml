@@ -136,9 +136,6 @@ Resources:
     Properties:
       Description: "Security Group ID to attach to Hail SageMaker notebook instances."
       Name: "/hail/sagemaker/security-group-id"
-      Tags:
-        environment: !Ref pTagEnvironment
-        owner: !Ref pTagOwner
       Type: "String"
       Value: !Ref sgSagemaker
 
@@ -147,9 +144,6 @@ Resources:
     Properties:
       Description: "Target subnet for Hail EMR cluster and SageMaker notebook instances."
       Name: "/hail/vpc/subnet-id"
-      Tags:
-        environment: !Ref pTagEnvironment
-        owner: !Ref pTagOwner
       Type: "String"
       Value: !Ref pSubnetId
 
@@ -158,9 +152,6 @@ Resources:
     Properties:
       Description: "Target VPC for Hail EMR cluster and SageMaker notebook instances."
       Name: "/hail/vpc/id"
-      Tags:
-        environment: !Ref pTagEnvironment
-        owner: !Ref pTagOwner
       Type: "String"
       Value: !Ref pVpcId
 
@@ -169,9 +160,6 @@ Resources:
     Properties:
       Description: "Subnet type, public or private, for Hail resources.  Drives SageMaker notebook networking configuration."
       Name: "/hail/vpc/subnet-type"
-      Tags:
-        environment: !Ref pTagEnvironment
-        owner: !Ref pTagOwner
       Type: "String"
       Value: !Ref pSubnetType
 
@@ -309,8 +297,5 @@ Resources:
     Properties:
       Description: "Registry of Open Data Hail S3 Bucket.  Contains VEP and LOFTEE data."
       Name: "/hail/s3/roda"
-      Tags:
-        environment: !Ref pTagEnvironment
-        owner: !Ref pTagOwner
       Type: "String"
       Value: "hail-vep-pipeline"
