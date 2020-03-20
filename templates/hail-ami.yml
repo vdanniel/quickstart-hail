@@ -4,17 +4,17 @@ Description: "Packer based Hail AMI Creation via AWS Codebuild. Adjust file path
 Parameters:
 
   pHtslibVersion:
-    Description: "Required - Default version of HTSLIB to install - https://github.com/samtools/samtools/releases"
+    Description: "Version of HTSLIB to install - https://github.com/samtools/samtools/releases"
     Default: "1.10.2"
     Type: "String"
 
   pKmsEbsArn:
-    Description: "Optional - If region level EBS encryption is enabled specify the full key ARN.  Otherwise, leave blank.  This does NOT automatically encrypt your AMI."
+    Description: "(Optional) If region level EBS encryption is enabled specify the full key ARN.  Otherwise, leave blank.  This does NOT automatically encrypt your AMI."
     Default: ""
     Type: "String"
 
   pS3bucketHail:
-    Description: "Required - You will upload Packer zip files here."
+    Description: "Upload Packer zip files here."
     Type: "String"
 
   pS3bucketRodaHail:
@@ -23,11 +23,11 @@ Parameters:
 
   pS3packerZipLocation:
     Default: "ami/packer.zip"
-    Description: "Required - S3 Key where you will upload the Packer Zip for new AMI builds in the Hail Bucket."
+    Description: "S3 Key where you will upload the Packer Zip for new AMI builds in the Hail Bucket."
     Type: "String"
 
   pSamtoolsVersion:
-    Description: "Required - Default version of Samtools to install - https://github.com/samtools/htslib/releases"
+    Description: "Version of Samtools to install - https://github.com/samtools/htslib/releases"
     Default: "1.10"
     Type: "String"
 
@@ -450,3 +450,4 @@ Resources:
                 Action:
                   - "iam:PassRole"
                 Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/hail-packer"  # PassRole on itself for EC2 handoff
+      RoleName: "hail-packer"
