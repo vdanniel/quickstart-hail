@@ -17,9 +17,9 @@ cat <<EOF
     --subnet-id        [Subnet ID]           - REQUIRED
     --var-file         [Full File Path]      - REQUIRED
     --vpc-id           [VPC ID]              - REQUIRED
-    --hail-version     [Number Version]      - OPTIONAL.  If omitted, the current HEAD of master branch will be pulled.
-    --htslib-version   [HTSLIB Version]      - OPTIONAL.  If omitted, HEAD develop branch will be used.
-    --samtools-version [Samtools Version]    - OPTIONAL.  If omitted, the current HEAD of master branch will be pulled.
+    --hail-version     [Number Version]      - OPTIONAL.  If omitted, master branch will be used.
+    --htslib-version   [HTSLIB Version]      - OPTIONAL.  If omitted, develop branch will be used.
+    --samtools-version [Samtools Version]    - OPTIONAL.  If omitted, master branch will be used.
     --vep-version      [Number Version]      - OPTIONAL.  If omitted, VEP will not be included.
 
     Example:

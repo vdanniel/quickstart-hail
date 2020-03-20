@@ -3,6 +3,11 @@ Description: "Packer based Hail AMI Creation via AWS Codebuild. Adjust file path
 
 Parameters:
 
+  pHtslibVersion:
+    Description: "Required - Default version of HTSLIB to install - https://github.com/samtools/samtools/releases"
+    Default: "1.10.2"
+    Type: "String"
+
   pKmsEbsArn:
     Description: "Optional - If region level EBS encryption is enabled specify the full key ARN.  Otherwise, leave blank.  This does NOT automatically encrypt your AMI."
     Default: ""
@@ -19,6 +24,11 @@ Parameters:
   pS3packerZipLocation:
     Default: "ami/packer.zip"
     Description: "Required - S3 Key where you will upload the Packer Zip for new AMI builds in the Hail Bucket."
+    Type: "String"
+
+  pSamtoolsVersion:
+    Description: "Required - Default version of Samtools to install - https://github.com/samtools/htslib/releases"
+    Default: "1.10"
     Type: "String"
 
   pSubnetId:
@@ -64,12 +74,16 @@ Metadata:
           - "pS3packerZipLocation"
           - "pS3bucketRodaHail"
           - "pKmsEbsArn"
+          - "pHtslibVersion"
+          - "pSamtoolsVersion"
       - Label:
           default: "Tagging"
         Parameters:
           - "pTagEnvironment"
           - "pTagOwner"
     ParameterLabels:
+      pHtslibVersion:
+        default: "HTSLIB Version"
       pKmsEbsArn:
         default: "EBS KMS Key ARN"
       pS3bucketRodaHail:
@@ -78,6 +92,8 @@ Metadata:
         default: "SSM Parameter for the Hail Bucket"
       pS3packerZipLocation:
         default: "Packer Zip S3 Location"
+      pSamtoolsVersion:
+        default: "Samtools Version"
       pVpcId:
         default: "VPC ID"
       pSubnetId:
@@ -127,10 +143,10 @@ Resources:
             Value: "0.2.XX"
           - Name: "HTSLIB_VERSION"
             Type: "PLAINTEXT"
-            Value: "1.XX"
+            Value: !Ref pHtslibVersion
           - Name: "SAMTOOLS_VERSION"
             Type: "PLAINTEXT"
-            Value: "1.XX"
+            Value: !Ref pSamtoolsVersion
           - Name: "VEP_VERSION"
             Type: "PLAINTEXT"
             Value: "XX"
@@ -177,10 +193,10 @@ Resources:
             Value: "0.2.xx"
           - Name: "HTSLIB_VERSION"
             Type: "PLAINTEXT"
-            Value: "1.XX"
+            Value: !Ref pHtslibVersion
           - Name: "SAMTOOLS_VERSION"
             Type: "PLAINTEXT"
-            Value: "1.XX"
+            Value: !Ref pSamtoolsVersion
           - Name: "VPC_ID"
             Type: "PLAINTEXT"
             Value: !Ref pVpcId
@@ -221,10 +237,10 @@ Resources:
             Value: "XX"
           - Name: "HTSLIB_VERSION"
             Type: "PLAINTEXT"
-            Value: "1.XX"
+            Value: !Ref pHtslibVersion
           - Name: "SAMTOOLS_VERSION"
             Type: "PLAINTEXT"
-            Value: "1.XX"
+            Value: !Ref pSamtoolsVersion
           - Name: "RODA_BUCKET"
             Type: "PLAINTEXT"
             Value: !Ref pS3bucketRodaHail
@@ -265,10 +281,10 @@ Resources:
             Value: "builds/emr-5.29.0.vars"
           - Name: "HTSLIB_VERSION"
             Type: "PLAINTEXT"
-            Value: "1.XX"
+            Value: !Ref pHtslibVersion
           - Name: "SAMTOOLS_VERSION"
             Type: "PLAINTEXT"
-            Value: "1.XX"
+            Value: !Ref pSamtoolsVersion
           - Name: "VPC_ID"
             Type: "PLAINTEXT"
             Value: !Ref pVpcId
