@@ -1,0 +1,43 @@
+project:
+  name: quickstart-hail
+  regions:
+    - us-east-1
+
+general:
+  parameters:
+      QSS3BucketName: privo-hail
+      QSS3KeyPrefix: quickstart-aws-hail/
+      pKmsEbsArn: ''
+      pS3packerZipLocation: ami/packer.zip
+      pHailBucket: p-qs-hail
+      pSageMakerBucket: p-qs-sagemaker
+      pLogBucket: p-qs-logs
+      pSubnetType: private
+      pTagOwner: ''
+      pTagEnvironment: development
+
+tests:
+  vpcNew:
+    parameters:
+      pTargetVpc: new
+      pNewVpcCidr: 10.0.0.0/16
+      pVpcId: ''
+      pSubnetId: ''
+      pSubnetType: private
+    template: ./templates/hail-master.yml
+  vpcExistingPrivateSubnet:
+    parameters:
+      pTargetVpc: existing
+      pNewVpcCidr: 10.0.0.0/16
+      pVpcId: vpc-2e9f9755
+      pSubnetId: subnet-48a26914
+      pSubnetType: private
+    template: ./templates/hail-master.yml
+  vpcExistingPublicSubnet:
+    parameters:
+      pTargetVpc: existing
+      pNewVpcCidr: 10.0.0.0/16
+      pVpcId: vpc-2e9f9755
+      pSubnetId: 	subnet-c0955e9c
+      pSubnetType: public
+    template: ./templates/hail-master.yml
