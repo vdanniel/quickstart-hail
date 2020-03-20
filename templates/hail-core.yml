@@ -215,7 +215,6 @@ Resources:
               Resource:
                 - !Sub "arn:aws:s3:::${QSS3BucketName}/*"
               Effect: "Allow"
-      RoleName: "hail-s3-lambda"
 
   lambdaS3seed:
     Type: "AWS::Lambda::Function"

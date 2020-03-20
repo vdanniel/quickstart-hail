@@ -340,7 +340,6 @@ Resources:
   roleHailPacker:
     Type: "AWS::IAM::Role"
     Properties:
-      RoleName: "hail-packer"
       Path: /
       AssumeRolePolicyDocument:
         Version: 2012-10-17
