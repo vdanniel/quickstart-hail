@@ -19,14 +19,14 @@ Parameters:
 
 Resources:
 
-  Portfolio:
+  portfolio:
     Type: "AWS::ServiceCatalog::Portfolio"
     Properties:
       Description: "Hail EMR and SageMaker Notebook Offerings"
       DisplayName: "Hail Products"
       ProviderName: "AWS"
 
-  ProductEmr:
+  productEmr:
     Type: "AWS::ServiceCatalog::CloudFormationProduct"
     Properties:
       Description: "Hail EMR Cluster"
@@ -36,13 +36,13 @@ Resources:
         - Info:
             LoadTemplateFromURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-emr.yml"
 
-  AssociationEmr:
+  associationEmr:
     Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
     Properties:
-      PortfolioId: !Ref Portfolio
-      ProductId: !Ref ProductEmr
+      PortfolioId: !Ref portfolio
+      ProductId: !Ref productEmr
 
-  ProductSageMakerNotebook:
+  productSageMakerNotebook:
     Type: "AWS::ServiceCatalog::CloudFormationProduct"
     Properties:
       Description: "SageMaker Notebook Instance"
@@ -52,8 +52,14 @@ Resources:
         - Info:
             LoadTemplateFromURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-jupyter.yml"
 
-  AssociationSageMakerNotebook:
+  associationSageMakerNotebook:
     Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
     Properties:
-      PortfolioId: !Ref Portfolio
-      ProductId: !Ref ProductSageMakerNotebook
+      PortfolioId: !Ref portfolio
+      ProductId: !Ref productSageMakerNotebook
+
+Outputs:
+
+  portfolio:
+    Description: "Service Catalog Portfolio"
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/servicecatalog/home?isSceuc=false&region=${AWS::Region}#portfolios/${portfolio}"

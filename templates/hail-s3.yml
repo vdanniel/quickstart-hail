@@ -132,3 +132,17 @@ Resources:
       Name: "/hail/s3/hail"
       Type: "String"
       Value: !Ref pHailBucket
+
+Outputs:
+
+  bucketHail:
+    Description: "Hail S3 Bucket"
+    Value: !Ref pHailBucket
+
+  bucketSageMaker:
+    Description: "SageMaker S3 Bucket"
+    Value: !Ref pSageMakerBucket
+
+  bucketLogs:
+    Description: "EMR Logs S3 Bucket"
+    Value: !Ref pLogBucket

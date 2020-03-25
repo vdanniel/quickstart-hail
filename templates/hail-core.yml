@@ -320,3 +320,21 @@ Resources:
       Name: "/hail/s3/roda"
       Type: "String"
       Value: "hail-vep-pipeline"
+
+Outputs:
+
+  portfolio:
+    Description: "Service Catalog Portfolio"
+    Value: !GetAtt stackServiceCatalog.Outputs.portfolio
+
+  bucketHail:
+    Description: "Hail S3 Bucket"
+    Value: !GetAtt stackS3.Outputs.bucketHail
+
+  bucketSageMaker:
+    Description: "SageMaker S3 Bucket"
+    Value: !GetAtt stackS3.Outputs.bucketSageMaker
+
+  bucketLogs:
+    Description: "EMR Logs S3 Bucket"
+    Value: !GetAtt stackS3.Outputs.bucketLogs

@@ -199,3 +199,25 @@ Resources:
         PrivateSubnet2ACIDR: !Select [ 4, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
         PrivateSubnet2BCIDR: !Select [ 5, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
       TimeoutInMinutes: 10
+
+Outputs:
+
+  portfolio:
+    Description: "Service Catalog Portfolio"
+    Value: !GetAtt core.Outputs.portfolio
+
+  codeBuildConsole:
+    Description: "CodeBuild Project Console URL"
+    Value: !Sub "https://console.aws.amazon.com/codesuite/codebuild/projects?region=${AWS::Region}"
+
+  bucketHail:
+    Description: "Hail S3 Bucket"
+    Value: !GetAtt core.Outputs.bucketHail
+
+  bucketSageMaker:
+    Description: "SageMaker S3 Bucket"
+    Value: !GetAtt core.Outputs.bucketSageMaker
+
+  bucketLogs:
+    Description: "EMR Logs S3 Bucket"
+    Value: !GetAtt core.Outputs.bucketLogs
