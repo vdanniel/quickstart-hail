@@ -19,7 +19,7 @@ Parameters:
 
   pHailBucket:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-    Description: "Required - Contains cache, bootstrapping, etc.  S3-SSE encryption at rest."
+    Description: "Required - Contains VEP configurations, and accepts cluster manifest outputs.  S3-SSE encryption at rest."
     Type: "String"
 
   pKmsEbsArn:
@@ -39,7 +39,7 @@ Parameters:
 
   pSageMakerBucket:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-    Description: "Required - SageMaker Jupyter home directories will be sync'd here.  S3-SSE encryption at rest."
+    Description: "Required - SageMaker Jupyter home directories will be synced here.  S3-SSE encryption at rest."
     Type: "String"
 
   pTagEnvironment:
@@ -102,6 +102,7 @@ Resources:
         pS3bucketRodaHail: !GetAtt rodaBucketParameter.Value
         pS3packerZipLocation: !Ref pS3packerZipLocation
         pSubnetId: !Ref pSubnetId
+        pSubnetType: !Ref pSubnetType
         pVpcId: !Ref pVpcId
       TimeoutInMinutes: 5
 
@@ -187,7 +188,7 @@ Resources:
                 - "logs:PutLogEvents"
               Resource: "arn:aws:logs:*:*:*"
               Effect: "Allow"
-        - PolicyName: "sagemaker-s3-put-object"
+        - PolicyName: "hail-sagemaker-s3-put-object"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -196,6 +197,7 @@ Resources:
               Resource:
                 - !Sub "arn:aws:s3:::${pSageMakerBucket}/common-notebooks/*"
                 - !Sub "arn:aws:s3:::${pSageMakerBucket}/scripts/*"
+                - !Sub "arn:aws:s3:::${pHailBucket}/*"
               Effect: "Allow"
         - PolicyName: "s3-quickstart-list"
           PolicyDocument:
@@ -230,44 +232,63 @@ Resources:
           client = boto3.client("s3")
 
 
-          def sync_path(source_bucket, dest_bucket, source_prefix, dest_prefix):
-              for obj in client.list_objects_v2(Bucket=source_bucket, Prefix=source_prefix)[
-                  "Contents"
-              ]:
+          def sync_path(source_bucket, dest_bucket, source_prefix, directory):
+              for obj in client.list_objects_v2(
+                  Bucket=source_bucket, Prefix=source_prefix + directory
+              )["Contents"]:
+
                   source_file = obj["Key"]
 
                   # Omit "directories" from copy
                   if not source_file.endswith("/"):
                       dest_filename = os.path.split(source_file)[1]
                       print(
-                          f"Copy s3://{source_bucket}/{source_file} => s3://{dest_bucket}/{dest_prefix}{dest_filename}"
+                          f"Copy s3://{source_bucket}/{source_file} => s3://{dest_bucket}/{directory}/{dest_filename}"
                       )
 
                       client.copy_object(
                           Bucket=dest_bucket,
-                          Key=dest_prefix + dest_filename,
+                          Key=directory + "/" + dest_filename,
                           CopySource=source_bucket + "/" + source_file,
                       )
 
 
           def lambda_handler(event, context):
               print(event)
+
               try:
                   source_bucket = event["ResourceProperties"]["QSS3BucketName"]
-                  dest_bucket = event["ResourceProperties"]["SageMakerBucketName"]
-                  quickstart_prefix = event["ResourceProperties"]["QSS3KeyPrefix"] + "sagemaker/"
+                  quickstart_prefix = event["ResourceProperties"]["QSS3KeyPrefix"]
+                  hail_bucket = event["ResourceProperties"]["HailBucketName"]
+                  sagemaker_bucket = event["ResourceProperties"]["SageMakerBucketName"]
+
+                  sync_plan = [
+                      {
+                          "source_path": quickstart_prefix + "sagemaker/",
+                          "sub_directories": ["scripts", "common-notebooks"],
+                          "dest_bucket": sagemaker_bucket,
+                      },
+                      {
+                          "source_path": quickstart_prefix,
+                          "sub_directories": ["vep-configuration"],
+                          "dest_bucket": hail_bucket,
+                      },
+                  ]
 
                   if event["RequestType"] in ["Create", "Update"]:
-                      print(f'{event["RequestType"]} Request by CFN...')
-                      source_paths = ["scripts/", "common-notebooks/"]
-                      for path in source_paths:
-                          sync_path(source_bucket, dest_bucket, quickstart_prefix + path, path)
+                      for obj in sync_plan:
+                          for directory in obj["sub_directories"]:
+                              sync_path(
+                                  source_bucket, obj["dest_bucket"], obj["source_path"], directory
+                              )
+
                       rdata = {"Status": "SUCCESS"}
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, rdata)
                   elif event["RequestType"] == "Delete":
                       print("Delete Request by CFN...")
                       rdata = {"Status": "Success"}
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, rdata)
+
               except Error as e:
                   print("[ERROR] - %s" % str(e))
                   rdata = {"Error": "Could not perform the operation"}
@@ -288,6 +309,7 @@ Resources:
     Properties:
       QSS3BucketName: !Ref QSS3BucketName
       QSS3KeyPrefix: !Ref QSS3KeyPrefix
+      HailBucketName: !Ref pHailBucket
       SageMakerBucketName: !Ref pSageMakerBucket
       ServiceToken: !GetAtt lambdaS3seed.Arn
 

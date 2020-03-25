@@ -35,6 +35,14 @@ Parameters:
     Description: "Required - CodeBuild builds will be executed in this subnet."
     Type: "AWS::EC2::Subnet::Id"
 
+  pSubnetType:
+    Description: "Private subnets are recommended."
+    Type: "String"
+    AllowedValues:
+      - "public"
+      - "private"
+    Default: "private"
+
   pVpcId:
     Description: "Required"
     Type: "AWS::EC2::VPC::Id"
@@ -67,6 +75,7 @@ Metadata:
         Parameters:
           - "pVpcId"
           - "pSubnetId"
+          - "pSubnetType"
       - Label:
           default: "General Settings"
         Parameters:
@@ -98,6 +107,8 @@ Metadata:
         default: "VPC ID"
       pSubnetId:
         default: "Subnet ID"
+      pSubnetType:
+        default: "Subnet Type"
       pTagOwner:
         default: "Owner Tag"
       pTagEnvironment:
@@ -106,6 +117,7 @@ Metadata:
 Conditions:
 
   CondEnableEncryption: !Not [ !Equals [ !Ref pKmsEbsArn, "" ] ]
+  CondPrivateSubnet: !Equals [ !Ref pSubnetType, "private" ]
 
 Resources:
 
@@ -159,6 +171,9 @@ Resources:
           - Name: "SUBNET_ID"
             Type: "PLAINTEXT"
             Value: !Ref pSubnetId
+          - Name: "SUBNET_TYPE"
+            Type: "PLAINTEXT"
+            Value: !Ref pSubnetType
         Image: alpine
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"
@@ -169,11 +184,14 @@ Resources:
         Location: !Sub "${pS3bucketHail}/${pS3packerZipLocation}"
         Type: "S3"
       VpcConfig:
-        SecurityGroupIds:
-          - !Ref sg
-        Subnets:
-          - !Ref pSubnetId
-        VpcId: !Ref pVpcId
+        !If
+          - CondPrivateSubnet
+          - SecurityGroupIds:
+              - !Ref sg
+            Subnets:
+              - !Ref pSubnetId
+            VpcId: !Ref pVpcId
+          - !Ref "AWS::NoValue"
       TimeoutInMinutes: 180
 
   hailNoVep:
@@ -203,6 +221,9 @@ Resources:
           - Name: "SUBNET_ID"
             Type: "PLAINTEXT"
             Value: !Ref pSubnetId
+          - Name: "SUBNET_TYPE"
+            Type: "PLAINTEXT"
+            Value: !Ref pSubnetType
         Image: alpine
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"
@@ -213,11 +234,14 @@ Resources:
         Location: !Sub "${pS3bucketHail}/${pS3packerZipLocation}"
         Type: "S3"
       VpcConfig:
-        SecurityGroupIds:
-          - !Ref sg
-        Subnets:
-          - !Ref pSubnetId
-        VpcId: !Ref pVpcId
+        !If
+          - CondPrivateSubnet
+          - SecurityGroupIds:
+              - !Ref sg
+            Subnets:
+              - !Ref pSubnetId
+            VpcId: !Ref pVpcId
+          - !Ref "AWS::NoValue"
       TimeoutInMinutes: 180
 
   hailMasterVep:
@@ -250,6 +274,9 @@ Resources:
           - Name: "SUBNET_ID"
             Type: "PLAINTEXT"
             Value: !Ref pSubnetId
+          - Name: "SUBNET_TYPE"
+            Type: "PLAINTEXT"
+            Value: !Ref pSubnetType
         Image: alpine
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"
@@ -260,11 +287,14 @@ Resources:
         Location: !Sub "${pS3bucketHail}/${pS3packerZipLocation}"
         Type: "S3"
       VpcConfig:
-        SecurityGroupIds:
-          - !Ref sg
-        Subnets:
-          - !Ref pSubnetId
-        VpcId: !Ref pVpcId
+        !If
+          - CondPrivateSubnet
+          - SecurityGroupIds:
+              - !Ref sg
+            Subnets:
+              - !Ref pSubnetId
+            VpcId: !Ref pVpcId
+          - !Ref "AWS::NoValue"
       TimeoutInMinutes: 180
 
   hailMasterNoVep:
@@ -291,6 +321,9 @@ Resources:
           - Name: "SUBNET_ID"
             Type: "PLAINTEXT"
             Value: !Ref pSubnetId
+          - Name: "SUBNET_TYPE"
+            Type: "PLAINTEXT"
+            Value: !Ref pSubnetType
         Image: alpine
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"
@@ -301,11 +334,14 @@ Resources:
         Location: !Sub "${pS3bucketHail}/${pS3packerZipLocation}"
         Type: "S3"
       VpcConfig:
-        SecurityGroupIds:
-          - !Ref sg
-        Subnets:
-          - !Ref pSubnetId
-        VpcId: !Ref pVpcId
+        !If
+          - CondPrivateSubnet
+          - SecurityGroupIds:
+              - !Ref sg
+            Subnets:
+              - !Ref pSubnetId
+            VpcId: !Ref pVpcId
+          - !Ref "AWS::NoValue"
       TimeoutInMinutes: 180
 
   instanceProfileHailPacker:

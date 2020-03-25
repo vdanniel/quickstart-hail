@@ -1,8 +1,8 @@
 {
   "builders": [{
     "type": "amazon-ebs",
-    "associate_public_ip_address": "false",
-    "ssh_interface": "private_ip",
+    "associate_public_ip_address": "{{user `associate_public_ip_address`}}",
+    "ssh_interface": "{{user `ssh_interface`}}",
     "source_ami_filter": {
       "filters": {
         "virtualization-type": "hvm",

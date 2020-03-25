@@ -15,6 +15,7 @@ cat <<EOF
     --hail-bucket      [Your S3 Bucket Name] - REQUIRED
     --roda-bucket      [RODA S3 Bucket Name] - REQUIRED
     --subnet-id        [Subnet ID]           - REQUIRED
+    --subnet-type      [Subnet Type]         - REQUIRED.  public or private
     --var-file         [Full File Path]      - REQUIRED
     --vpc-id           [VPC ID]              - REQUIRED
     --hail-version     [Number Version]      - OPTIONAL.  If omitted, master branch will be used.
@@ -27,6 +28,7 @@ cat <<EOF
    build-wrapper.sh --hail-bucket your-quickstart-s3-bucket-name \\
                     --roda-bucket hail-vep-pipeline \\
                     --subnet-id subnet-99999999 \\
+                    --subnet-type private \\
                     --var-file builds/emr-5.29.0.vars \\
                     --vpc-id vpc-99999999 \\
                     --hail-version 0.2.34 \\
@@ -86,6 +88,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --subnet-type)
+            SUBNET_TYPE="$2"
+            shift
+            shift
+            ;;
     esac
 done
 
@@ -104,6 +111,17 @@ else
     HAIL_NAME_VERSION="$HAIL_NAME_VERSION-vep-$VEP_VERSION"
 fi
 
+if [ "$SUBNET_TYPE" == "public" ]; then
+    ASSOCIATE_PUBLIC_IP_ADDRESS="true"
+    SSH_INTERFACE="public_ip"
+elif [ "$SUBNET_TYPE" == "private" ]; then
+    ASSOCIATE_PUBLIC_IP_ADDRESS="false"
+    SSH_INTERFACE="private_ip"
+else
+    echo "Invalid subnet type.  Valid types are public or private."
+    exit 1
+fi
+
 export AWS_MAX_ATTEMPTS=600  # Builds time out with default value
 packer build --var hail_name_version="$HAIL_NAME_VERSION" \
              --var hail_version="$HAIL_VERSION" \
@@ -111,6 +129,8 @@ packer build --var hail_name_version="$HAIL_NAME_VERSION" \
              --var htslib_version="$HTSLIB_VERSION" \
              --var samtools_version="$SAMTOOLS_VERSION" \
              --var subnet_id="$SUBNET_ID" \
+             --var associate_public_ip_address="$ASSOCIATE_PUBLIC_IP_ADDRESS" \
+             --var ssh_interface="$SSH_INTERFACE" \
              --var vep_version="$VEP_VERSION" \
              --var vpc_id="$VPC_ID" \
              --var-file="$CORE_VAR_FILE" \
