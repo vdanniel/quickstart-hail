@@ -19,40 +19,47 @@ Parameters:
 
   pHailBucket:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-    Description: "Required - Contains VEP configurations, and accepts cluster manifest outputs.  S3-SSE encryption at rest."
+    Description: "EMR logs, cluster manifests, and VEP configuration files are placed here."
     Type: "String"
+
+  pCreateHailBucket:
+    Type: "String"
+    Description: "Select No to use an existing bucket."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "yes"
 
   pKmsEbsArn:
     Description: "Optional - if the source AMI is encrypted specify the full key ARN.  Otherwise, leave blank.  This does NOT automatically enable EBS encryption."
     Default: ""
     Type: "String"
 
-  pLogBucket:
-    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-    Description: "Required - Will use S3-SSE encryption at rest."
-    Type: "String"
-
   pS3packerZipLocation:
     Default: "ami/packer.zip"
-    Description: "Required - S3 Key where you will upload the Packer Zip for new AMI builds in the Hail Bucket."
+    Description: "S3 key in the Hail bucket where Packer zip files will be uploaded.  This supports custom AMI building."
     Type: "String"
 
   pSageMakerBucket:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-    Description: "Required - SageMaker Jupyter home directories will be synced here.  S3-SSE encryption at rest."
+    Description: "Bucket for common Jupyter notebooks and SageMaker home directory backups."
     Type: "String"
+
+  pCreateSageMakerBucket:
+    Type: "String"
+    Description: "Select No to use an existing bucket."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "yes"
 
   pTagEnvironment:
     AllowedValues:
       - "production"
       - "staging"
-      - "sandbox"
-      - "test"
       - "development"
-      - "qa"
-      - "dr"
     Default: "development"
-    Description: "Optional - Environment type for default resource tagging."
+    Description: "Environment type for default resource tagging."
     Type: "String"
 
   pTagOwner:
@@ -84,8 +91,9 @@ Resources:
       TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-s3.yml"
       Parameters:
         pHailBucket: !Ref pHailBucket
-        pLogBucket: !Ref pLogBucket
+        pCreateHailBucket: !Ref pCreateHailBucket
         pSageMakerBucket: !Ref pSageMakerBucket
+        pCreateSageMakerBucket: !Ref pCreateSageMakerBucket
         pTagEnvironment: !Ref pTagEnvironment
         pTagOwner: !Ref pTagOwner
       TimeoutInMinutes: 5
@@ -98,8 +106,8 @@ Resources:
       TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-ami.yml"
       Parameters:
         pKmsEbsArn: !Ref pKmsEbsArn
-        pS3bucketHail: !Ref pHailBucket
-        pS3bucketRodaHail: !GetAtt rodaBucketParameter.Value
+        pHailBucket: !Ref pHailBucket
+        pRodaHailBucket: !GetAtt rodaBucketParameter.Value
         pS3packerZipLocation: !Ref pS3packerZipLocation
         pSubnetId: !Ref pSubnetId
         pSubnetType: !Ref pSubnetType
@@ -335,6 +343,3 @@ Outputs:
     Description: "SageMaker S3 Bucket"
     Value: !GetAtt stackS3.Outputs.bucketSageMaker
 
-  bucketLogs:
-    Description: "EMR Logs S3 Bucket"
-    Value: !GetAtt stackS3.Outputs.bucketLogs
