@@ -5,30 +5,37 @@ Parameters:
 
   pHailBucket:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-    Description: "Required - Contains cache, bootstrapping, etc.  S3-SSE encryption at rest."
+    Description: "EMR logs, cluster manifests, and VEP configuration files are placed here."
     Type: "String"
 
-  pLogBucket:
-    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-    Description: "Required - Will use S3-SSE encryption at rest."
+  pCreateHailBucket:
     Type: "String"
+    Description: "Select No to use an existing bucket."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "yes"
 
   pSageMakerBucket:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-    Description: "Required - SageMaker Jupyter home directories will be sync'd here.  S3-SSE encryption at rest."
+    Description: "Bucket for common Jupyter notebooks and SageMaker home directory backups."
     Type: "String"
+
+  pCreateSageMakerBucket:
+    Type: "String"
+    Description: "Select No to use an existing bucket."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "yes"
 
   pTagEnvironment:
     AllowedValues:
       - "production"
       - "staging"
-      - "sandbox"
-      - "test"
       - "development"
-      - "qa"
-      - "dr"
     Default: "development"
-    Description: "Optional - Environment type for default resource tagging."
+    Description: "Environment type for default resource tagging."
     Type: "String"
 
   pTagOwner:
@@ -45,8 +52,9 @@ Metadata:
           default: "Bucket Details"
         Parameters:
           - "pHailBucket"
+          - "pCreateHailBucket"
           - "pSageMakerBucket"
-          - "pLogBucket"
+          - "pCreateSageMakerBucket"
       - Label:
           default: "Tagging"
         Parameters:
@@ -55,42 +63,27 @@ Metadata:
     ParameterLabels:
       pHailBucket:
         default: "Hail Bucket Name"
+      pCreateHailBucket:
+        default: "Create Hail Bucket"
       pSageMakerBucket:
         default: "Sagemaker Home Directory Bucket Name"
-      pLogBucket:
-        default: "EMR Log Bucket Name"
+      pCreateSageMakerBucket:
+        default: "Create SageMaker Bucket"
       pTagOwner:
         default: "Owner Tag"
       pTagEnvironment:
         default: "Environment Tag"
 
+Conditions:
+
+    createHailBucket: !Equals  [!Ref pCreateHailBucket, "yes"]
+    createSageMakerBucket: !Equals  [!Ref pCreateSageMakerBucket, "yes"]
 
 Resources:
 
-  logBucket:
-    Type: "AWS::S3::Bucket"
-    Properties:
-      BucketName: !Ref pLogBucket
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: "AES256"
-      Tags:
-        - Key: "environment"
-          Value: !Ref pTagEnvironment
-        - Key: "owner"
-          Value: !Ref pTagOwner
-
-  logBucketParameter:
-    Type: "AWS::SSM::Parameter"
-    Properties:
-      Description: "S3 bucket for EMR logs."
-      Name: "/hail/s3/emrlogs"
-      Type: "String"
-      Value: !Ref logBucket
-
   sagemakerBucket:
     Type: "AWS::S3::Bucket"
+    Condition: createSageMakerBucket
     Properties:
       BucketName: !Ref pSageMakerBucket
       BucketEncryption:
@@ -109,10 +102,11 @@ Resources:
       Description: "S3 bucket with Jupyter scripts, common notebooks, and home directory backups."
       Name: "/hail/s3/sagemaker"
       Type: "String"
-      Value: !Ref sagemakerBucket
+      Value: !Ref pSageMakerBucket
 
   hailBucket:
     Type: "AWS::S3::Bucket"
+    Condition: createHailBucket
     Properties:
       BucketName: !Ref pHailBucket
       BucketEncryption:
@@ -142,7 +136,3 @@ Outputs:
   bucketSageMaker:
     Description: "SageMaker S3 Bucket"
     Value: !Ref pSageMakerBucket
-
-  bucketLogs:
-    Description: "EMR Logs S3 Bucket"
-    Value: !Ref pLogBucket
