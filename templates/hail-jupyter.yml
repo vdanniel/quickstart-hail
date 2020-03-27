@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "SageMaker Jupter Notebook Instance for use with Hail on EMR"
+Description: "SageMaker Notebook Instance for use with Hail on EMR"
 
 Parameters:
 
@@ -8,7 +8,7 @@ Parameters:
       - "false"
       - "true"
     Default: "false"
-    Description: "Required - Allow Systems Manager (SSM) shell access to EMR nodes.  Must also be set to true on EMR CloudFormation stacks."
+    Description: "Allow Systems Manager (SSM) shell access to EMR nodes.  Must also be set to true on EMR CloudFormation stacks."
     Type: "String"
 
   pInstanceType:
@@ -22,30 +22,31 @@ Parameters:
       - "ml.t3.xlarge"
       - "ml.t3.2large"
     Default: "ml.t3.medium"
-    Description: "Required"
+    Description: ""
     Type: "String"
 
   pName:
-    Description: "Required - Used as the name of the notebook instance and S3 backup location.  Recommend username.  Example: jdoe"
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    Description: "Used as the name of the notebook instance and S3 backup location.  Username is recommend - E.g. jsmith"
     Type: "String"
 
-  pS3bucketJupyter:
-    Description: "Required - This parameter is set by the S3 stack.  No changes should be necessary.  S3 bucket with Jupyter scripts, common notebooks, and home directory backups."
+  pSageMakerBucket:
+    Description: "This parameter is set by the S3 stack.  No changes should be necessary.  S3 bucket with scripts, common notebooks, and home directory backups."
     Type: "AWS::SSM::Parameter::Value<String>"
     Default: "/hail/s3/sagemaker"
 
-  pS3bucketHail:
-    Description: "Required - This parameter is set by the S3 stack.  No changes should be necessary.  Notebook instance will have full read."
+  pHailBucket:
+    Description: "This parameter is set by the S3 stack.  No changes should be necessary.  Notebook instance will have full read."
     Type: "AWS::SSM::Parameter::Value<String>"
     Default: "/hail/s3/hail"
 
   pSubnetId:
-    Description: "Required - Target subnet for Notebook server.  Private subnet is strongly suggested as browser access will still be available via the AWS console."
+    Description: "This parameter is set by the hail-core stack. No changes should be necessary."
     Default: "/hail/vpc/subnet-id"
     Type: "AWS::SSM::Parameter::Value<String>"
 
   pSubnetType:
-    Description: "Required - Target subnet type."
+    Description: "This parameter is set by the hail-core stack. No changes should be necessary."
     Default: "/hail/vpc/subnet-type"
     Type: "AWS::SSM::Parameter::Value<String>"
 
@@ -53,29 +54,25 @@ Parameters:
     AllowedValues:
       - "production"
       - "staging"
-      - "sandbox"
-      - "test"
       - "development"
-      - "qa"
-      - "dr"
     Default: "development"
-    Description: "Optional - Environment type for default resource tagging."
+    Description: "Environment type for default resource tagging."
     Type: "String"
 
   pTagOwner:
     Default: ""
-    Description: "Optional - Owner of the resources.  Person/Department, etc."
+    Description: "(Optional) Owner of the resources.  Person/Department, etc."
     Type: "String"
 
   pVolumeSize:
     Default: "20"
-    Description: "Required - Size (GB)."
+    Description: "Size (GB)."
     MaxValue: "500"
     MinValue: "5"
     Type: "Number"
 
   pSgSagemaker:
-    Description: "Required - This parameter is set by the hail-core stack.  No changes should be necessary.  This security group ID will be attached to the notebook instance."
+    Description: "This parameter is set by the hail-core stack.  No changes should be necessary.  This security group ID will be attached to the notebook instance."
     Type: "AWS::SSM::Parameter::Value<String>"
     Default: "/hail/sagemaker/security-group-id"
 
@@ -100,8 +97,8 @@ Metadata:
       - Label:
           default: "S3 Resources"
         Parameters:
-          - "pS3bucketHail"
-          - "pS3bucketJupyter"
+          - "pHailBucket"
+          - "pSageMakerBucket"
       - Label:
           default: "Tagging"
         Parameters:
@@ -111,18 +108,18 @@ Metadata:
       pAllowSsmShell:
         default: "Allow SSM Shell Access to EMR Nodes"
       pSubnetId:
-        default: "Subnet ID"
+        default: "SSM Parameter for Subnet ID"
       pSubnetType:
-        default: "Subnet Type"
+        default: "SSM Parameter for Subnet Type"
       pName:
         default: "Instance Name"
       pInstanceType:
         default: "Instance Type"
       pVolumeSize:
         default: "Volume Size"
-      pS3bucketHail:
+      pHailBucket:
         default: "SSM Parameter for Hail Bucket"
-      pS3bucketJupyter:
+      pSageMakerBucket:
         default: "SSM Parameter for SageMaker Bucket"
       pSgSagemaker:
         default: "SSM Parameter for SageMaker Security Group ID"
@@ -169,7 +166,7 @@ Resources:
               #!/bin/bash
               set -ex
 
-              BUCKET="${pS3bucketJupyter}"
+              BUCKET="${pSageMakerBucket}"
               EC2_USER_BIN="/home/ec2-user/SageMaker/bin/"
               sudo -u ec2-user -i <<EOF
               set -ex
@@ -182,7 +179,7 @@ Resources:
               #!/bin/bash
               set -ex
 
-              BUCKET="${pS3bucketJupyter}"
+              BUCKET="${pSageMakerBucket}"
               DIRECTORY="/home/ec2-user/SageMaker/"
 
               # Copy previously backed up user notebooks
@@ -213,7 +210,6 @@ Resources:
               sudo yum -y install https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
               EOF
 
-
   role:
     Type: "AWS::IAM::Role"
     Properties:
@@ -235,12 +231,12 @@ Resources:
               - Effect: "Allow"
                 Action: "s3:*"
                 Resource:
-                  - !Sub "arn:aws:s3:::${pS3bucketJupyter}/${pName}/*"
+                  - !Sub "arn:aws:s3:::${pSageMakerBucket}/${pName}/*"
               - Effect: "Allow"
                 Action:
                   - "s3:ListObject"
                   - "s3:ListBucket"
-                Resource: !Sub "arn:aws:s3:::${pS3bucketJupyter}"
+                Resource: !Sub "arn:aws:s3:::${pSageMakerBucket}"
         - PolicyName: "s3ListPaths"
           PolicyDocument:
             Version: "2012-10-17"
@@ -248,7 +244,7 @@ Resources:
               - Effect: "Allow"
                 Action: "s3:ListBucket"
                 Resource:
-                  - !Sub "arn:aws:s3:::${pS3bucketJupyter}"
+                  - !Sub "arn:aws:s3:::${pSageMakerBucket}"
                 Condition:
                   StringLike:
                     s3:prefix:
@@ -259,8 +255,8 @@ Resources:
                 Action:
                   - "s3:GetObject"
                 Resource:
-                  - !Sub "arn:aws:s3:::${pS3bucketJupyter}/scripts/*"
-                  - !Sub "arn:aws:s3:::${pS3bucketJupyter}/common-notebooks/*"
+                  - !Sub "arn:aws:s3:::${pSageMakerBucket}/scripts/*"
+                  - !Sub "arn:aws:s3:::${pSageMakerBucket}/common-notebooks/*"
         - PolicyName: "s3hailFullRead"
           PolicyDocument:
             Version: "2012-10-17"
@@ -270,8 +266,8 @@ Resources:
                   - "s3:Get*"
                   - "s3:List*"
                 Resource:
-                  - !Sub "arn:aws:s3:::${pS3bucketHail}/*"
-                  - !Sub "arn:aws:s3:::${pS3bucketHail}"
+                  - !Sub "arn:aws:s3:::${pHailBucket}/*"
+                  - !Sub "arn:aws:s3:::${pHailBucket}"
         - PolicyName: "cloudwatchWrite"
           PolicyDocument:
             Version: "2012-10-17"
@@ -294,7 +290,7 @@ Resources:
                   - "elasticmapreduce:DescribeCluster"
                   - "elasticmapreduce:ListInstanceGroups"
                 Resource: "*"
-      RoleName: !Sub "sagemaker-jupyter-${pName}"
+      RoleName: !Sub "sagemaker-${pName}"
 
   policyAllowSsmShell:
     Type: "AWS::IAM::Policy"
@@ -314,3 +310,9 @@ Resources:
       PolicyName: "ssm-session-by-tag"
       Roles:
         - !Ref role
+
+Outputs:
+
+  url:
+    Description: "Console Notebook URL"
+    Value: !Sub "https://console.aws.amazon.com/sagemaker/home?region=${AWS::Region}#/notebook-instances/${pName}"
