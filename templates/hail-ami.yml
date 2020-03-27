@@ -13,17 +13,17 @@ Parameters:
     Default: ""
     Type: "String"
 
-  pS3bucketHail:
-    Description: "Upload Packer zip files here."
+  pHailBucket:
+    Description: "Packer Zip files are uploaded to this bucket."
     Type: "String"
 
-  pS3bucketRodaHail:
-    Description: "Required - This parameter is set by the S3 stack.  No changes should be necessary.  Contains VEP and LOFTEE files."
+  pRodaHailBucket:
+    Description: "This parameter is set by the S3 stack.  No changes should be necessary.  Contains VEP and LOFTEE files."
     Type: "String"
 
   pS3packerZipLocation:
     Default: "ami/packer.zip"
-    Description: "S3 Key where you will upload the Packer Zip for new AMI builds in the Hail Bucket."
+    Description: "S3 key in the Hail bucket where Packer zip files will be uploaded.  This supports custom AMI building."
     Type: "String"
 
   pSamtoolsVersion:
@@ -51,13 +51,9 @@ Parameters:
     AllowedValues:
       - "production"
       - "staging"
-      - "sandbox"
-      - "test"
       - "development"
-      - "qa"
-      - "dr"
     Default: "development"
-    Description: "Optional - Environment type for default resource tagging."
+    Description: "Environment type for default resource tagging."
     Type: "String"
 
   pTagOwner:
@@ -79,9 +75,9 @@ Metadata:
       - Label:
           default: "General Settings"
         Parameters:
-          - "pS3bucketHail"
+          - "pHailBucket"
           - "pS3packerZipLocation"
-          - "pS3bucketRodaHail"
+          - "pRodaHailBucket"
           - "pKmsEbsArn"
           - "pHtslibVersion"
           - "pSamtoolsVersion"
@@ -95,9 +91,9 @@ Metadata:
         default: "HTSLIB Version"
       pKmsEbsArn:
         default: "EBS KMS Key ARN"
-      pS3bucketRodaHail:
+      pRodaHailBucket:
         default: "SSM Parameter for AWS RODA Bucket"
-      pS3bucketHail:
+      pHailBucket:
         default: "SSM Parameter for the Hail Bucket"
       pS3packerZipLocation:
         default: "Packer Zip S3 Location"
@@ -164,7 +160,7 @@ Resources:
             Value: "XX"
           - Name: "RODA_BUCKET"
             Type: "PLAINTEXT"
-            Value: !Ref pS3bucketRodaHail
+            Value: !Ref pRodaHailBucket
           - Name: "VPC_ID"
             Type: "PLAINTEXT"
             Value: !Ref pVpcId
@@ -181,7 +177,7 @@ Resources:
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
         BuildSpec: "codebuild/buildspec.yml"
-        Location: !Sub "${pS3bucketHail}/${pS3packerZipLocation}"
+        Location: !Sub "${pHailBucket}/${pS3packerZipLocation}"
         Type: "S3"
       VpcConfig:
         !If
@@ -231,7 +227,7 @@ Resources:
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
         BuildSpec: "codebuild/buildspec.yml"
-        Location: !Sub "${pS3bucketHail}/${pS3packerZipLocation}"
+        Location: !Sub "${pHailBucket}/${pS3packerZipLocation}"
         Type: "S3"
       VpcConfig:
         !If
@@ -267,7 +263,7 @@ Resources:
             Value: !Ref pSamtoolsVersion
           - Name: "RODA_BUCKET"
             Type: "PLAINTEXT"
-            Value: !Ref pS3bucketRodaHail
+            Value: !Ref pRodaHailBucket
           - Name: "VPC_ID"
             Type: "PLAINTEXT"
             Value: !Ref pVpcId
@@ -284,7 +280,7 @@ Resources:
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
         BuildSpec: "codebuild/buildspec.yml"
-        Location: !Sub "${pS3bucketHail}/${pS3packerZipLocation}"
+        Location: !Sub "${pHailBucket}/${pS3packerZipLocation}"
         Type: "S3"
       VpcConfig:
         !If
@@ -331,7 +327,7 @@ Resources:
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
         BuildSpec: "codebuild/buildspec.yml"
-        Location: !Sub "${pS3bucketHail}/${pS3packerZipLocation}"
+        Location: !Sub "${pHailBucket}/${pS3packerZipLocation}"
         Type: "S3"
       VpcConfig:
         !If
@@ -404,19 +400,19 @@ Resources:
                   - "s3:GetObject"
                   - "s3:GetObjectVersion"
                 Resource:
-                  - !Sub "arn:aws:s3:::${pS3bucketHail}/*"
-                  - !Sub "arn:aws:s3:::${pS3bucketRodaHail}/*"
+                  - !Sub "arn:aws:s3:::${pHailBucket}/*"
+                  - !Sub "arn:aws:s3:::${pRodaHailBucket}/*"
               - Effect: "Allow"
                 Action:
                   - "s3:GetBucketLocation"
                   - "s3:ListBucket"
                 Resource:
-                  - !Sub "arn:aws:s3:::${pS3bucketHail}"
-                  - !Sub "arn:aws:s3:::${pS3bucketRodaHail}"
+                  - !Sub "arn:aws:s3:::${pHailBucket}"
+                  - !Sub "arn:aws:s3:::${pRodaHailBucket}"
               - Effect: "Allow"
                 Action: s3:PutObject"
                 Resource:
-                  - !Sub "arn:aws:s3:::${pS3bucketHail}/*"
+                  - !Sub "arn:aws:s3:::${pHailBucket}/*"
         - PolicyName: "CodeBuildServiceEc2Vpc"
           PolicyDocument:
             Version: 2012-10-17
