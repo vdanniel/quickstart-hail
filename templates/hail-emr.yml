@@ -5,7 +5,7 @@ Description: "EMR with Hail and VEP"
 Parameters:
 
   pAmi:
-    Description: "Required - Packer built in the local account, or use public AMI from repo"
+    Description: "Packer built in the local account, or use public AMI."
     Type: "AWS::EC2::Image::Id"
 
   pAllowSsmShell:
@@ -13,23 +13,24 @@ Parameters:
       - "false"
       - "true"
     Default: "true"
-    Description: "Required - Allow Systems Manager (SSM) shell access from Sagemaker notebooks.  Must also be set to true on SageMaker CloudFormation stacks."
+    Description: "Allow Systems Manager (SSM) shell access from Sagemaker notebooks.  Must also be set to true on SageMaker CloudFormation stacks."
     Type: "String"
 
   pClusterName:
-    Description: "Required"
+    AllowedPattern: "^[0-9a-zA-Z-/]*$"
+    Description: ""
     MinLength: 3
     Type: "String"
 
   pEmrCoreInstanceCount:
     Default: 2
-    Description: "Required - must be 1 or greater."
+    Description: "Must be 1 or greater."
     MinValue: 1 # Cannot be 0.
     Type: "Number"
 
   pEmrCoreInstanceDataVolSize:
     Default: "100"
-    Description: "Required - GB. Secondary GP2 data volume for CORE nodes. Available on /mnt."
+    Description: "GB. Secondary GP2 data volume for CORE nodes. Available on /mnt."
     MaxValue: "2000"
     MinValue: "20"
     Type: "Number"
@@ -120,12 +121,12 @@ Parameters:
       - "r5d.12xlarge"
       - "r5d.24xlarge"
     Default: "m5.2xlarge"
-    Description: "Required"
+    Description: ""
     Type: "String"
 
   pEmrInstanceRootVolSize:
     Default: "100"
-    Description: "Required - GB.  Root volume size for ALL cluster instances."
+    Description: "Root volume size in GB for all cluster instances."
     MaxValue: "100"
     MinValue: "10"
     Type: "Number"
@@ -135,7 +136,7 @@ Parameters:
       - "true"
       - "false"
     Default: "false"
-    Description: "Required - Applies to Master and Core Nodes in the cluster."
+    Description: "Applies to Master and Core Nodes in the cluster."
     Type: "String"
 
   pEmrMasterInstanceSize:
@@ -228,12 +229,12 @@ Parameters:
 
   pEmrMinTaskNodeCount:
     Default: 1
-    Description: "Required - Value of 0 disables task nodes and auto scaling."
+    Description: "Value of 0 disables task nodes and auto scaling."
     Type: "Number"
 
   pEmrMaxTaskNodeCount:
     Default: 1
-    Description: "Required - must be equal to or greater than minimum."
+    Description: "Must be equal to or greater than minimum."
     MaxValue: 50
     Type: "Number"
 
@@ -323,63 +324,48 @@ Parameters:
       - "r5d.12xlarge"
       - "r5d.24xlarge"
     Default: "r5.4xlarge"
-    Description: "Required"
+    Description: ""
     Type: "String"
 
   pEmrReleaseLabel:
     AllowedValues:
-      - "emr-5.25.0"
-      - "emr-5.26.0"
-      - "emr-5.27.0"
-      - "emr-5.28.0"
       - "emr-5.29.0"
     Default: "emr-5.29.0"
-    Description: "Required"
+    Description: ""
     Type: "String"
 
   pKmsEbsArn:
-    Description: "Optional - if the source AMI is encrypted specify the full key ARN.  Otherwise, leave blank.  This does NOT automatically enable EBS encryption."
+    Description: "(Optional) If the source AMI is encrypted specify the full key ARN.  Otherwise, leave blank.  This does NOT automatically enable EBS encryption."
     Default: ""
     Type: "String"
 
   pLivyAccessSecurityGroup:
-    Description: "Required - Security Group ID that will be allowed access to the master node on port 8998."
+    Description: "This parameter is set by the hail-core stack. No changes should be necessary.  Security Group ID that will be allowed access to the master node on port 8998."
     Default: "/hail/sagemaker/security-group-id"
     Type: "AWS::SSM::Parameter::Value<String>"
 
-  pS3LogBucket:
-    Description: "Required - This parameter is set by the S3 stack.  No changes should be necessary.  Cluster logs will be stored here."
-    Default: "/hail/s3/emrlogs"
-    Type: "AWS::SSM::Parameter::Value<String>"
-
-  pS3HailBucket:
-    Description: "Required - This parameter is set by the S3 stack.  No changes should be necessary.  Cluster Manifests will be put here on cluster launch under /manifests."
+  pHailBucket:
+    Description: "This parameter is set by the S3 stack.  No changes should be necessary.  Cluster Manifests will be put here on cluster launch under /manifests."
     Default: "/hail/s3/hail"
     Type: "AWS::SSM::Parameter::Value<String>"
 
   pSubnetId:
-    Description: "Required - nodes will be deployed in this subnet."
+    Description: "This parameter is set by the hail-core stack. No changes should be necessary.  Nodes will be deployed in this subnet."
     Default: "/hail/vpc/subnet-id"
     Type: "AWS::SSM::Parameter::Value<String>"
 
   pTagEnvironment:
     AllowedValues:
-      - "beta"
-      - "dev"
-      - "development"
-      - "dr"
-      - "test"
       - "production"
-      - "qa"
-      - "sandbox"
       - "staging"
+      - "development"
     Default: "development"
-    Description: "Optional - Environment type for default resource tagging."
+    Description: "Environment type for default resource tagging."
     Type: "String"
 
   pTagOwner:
     Default: ""
-    Description: "Optional - Owner of the resources.  Person/Department, etc."
+    Description: "(Optional) - Owner of the resources.  Person/Department, etc."
     Type: "String"
 
   pTaskNodeMarket:
@@ -387,14 +373,13 @@ Parameters:
       - "ON_DEMAND"
       - "SPOT"
     Default: "ON_DEMAND"
-    Description: "Required - on demand or spot instances.  Spot instances are used with a max bid of the on demand price."
+    Description: "Spot instances are used with a max bid of the on demand price."
     Type: "String"
 
   pVpcId:
-    Description: "Required"
+    Description: "This parameter is set by the hail-core stack. No changes should be necessary."
     Default: "/hail/vpc/id"
     Type: "AWS::SSM::Parameter::Value<String>"
-
 
 Metadata:
 
@@ -414,8 +399,7 @@ Metadata:
           - "pEmrReleaseLabel"
           - "pEmrInstanceRootVolSize"
           - "pKmsEbsArn"
-          - "pS3LogBucket"
-          - "pS3HailBucket"
+          - "pHailBucket"
           - "pEmrInstanceTerminationProtection"
           - "pAllowSsmShell"
       - Label:
@@ -469,9 +453,7 @@ Metadata:
         default: "EBS KMS Key ARN"
       pLivyAccessSecurityGroup:
         default: "Livy Access Security Group"
-      pS3LogBucket:
-        default: "SSM Parameter for EMR Log Bucket"
-      pS3HailBucket:
+      pHailBucket:
         default: "SSM Parameter for Hail Bucket"
       pSubnetId:
         default: "Subnet ID"
@@ -569,7 +551,7 @@ Resources:
                 VolumesPerInstance: 1
         TerminationProtected: !Ref pEmrInstanceTerminationProtection
       JobFlowRole: !Ref instanceProfileEmrEc2
-      LogUri: !Join ["", ["s3://", !Ref pS3LogBucket, "/elasticmapreduce/"]]
+      LogUri: !Join ["", ["s3://", !Ref pHailBucket, "/elasticmapreduce/"]]
       Name: !Ref pClusterName
       ReleaseLabel: !Ref pEmrReleaseLabel
       ServiceRole: !Ref roleEmr
@@ -795,7 +777,7 @@ Resources:
             Statement:
               - Effect: "Allow"
                 Action: "s3:PutObject"
-                Resource: !Join [ "", ["arn:aws:s3:::", !Ref pS3HailBucket, ":/manifests/*"]]
+                Resource: !Join [ "", ["arn:aws:s3:::", !Ref pHailBucket, ":/manifests/*"]]
         - PolicyName: "cloudformationDescribeStack"
           PolicyDocument:
             Version: "2012-10-17"
@@ -893,3 +875,13 @@ Resources:
           Value: !Ref pTagEnvironment
         - Key: "owner"
           Value: !Ref pTagOwner
+
+Outputs:
+
+  url:
+    Description: "Console Cluster URL"
+    Value: !Sub "https://console.aws.amazon.com/elasticmapreduce/home?region=${AWS::Region}#cluster-details:${cluster}"
+
+  clusterId:
+    Description: "Cluster ID"
+    Value: !Ref cluster
