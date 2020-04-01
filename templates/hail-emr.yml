@@ -120,7 +120,7 @@ Parameters:
       - "r5d.4xlarge"
       - "r5d.12xlarge"
       - "r5d.24xlarge"
-    Default: "m5.2xlarge"
+    Default: "r5.xlarge"
     Description: ""
     Type: "String"
 
@@ -224,7 +224,7 @@ Parameters:
       - "r5d.4xlarge"
       - "r5d.12xlarge"
       - "r5d.24xlarge"
-    Default: "r5.4xlarge"
+    Default: "m5.xlarge"
     Type: "String"
 
   pEmrMinTaskNodeCount:
@@ -323,7 +323,7 @@ Parameters:
       - "r5d.4xlarge"
       - "r5d.12xlarge"
       - "r5d.24xlarge"
-    Default: "r5.4xlarge"
+    Default: "r5.xlarge"
     Description: ""
     Type: "String"
 
