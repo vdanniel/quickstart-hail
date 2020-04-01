@@ -297,7 +297,7 @@ Resources:
                       rdata = {"Status": "Success"}
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, rdata)
 
-              except Error as e:
+              except Exception as e:
                   print("[ERROR] - %s" % str(e))
                   rdata = {"Error": "Could not perform the operation"}
                   cfnresponse.send(event, context, cfnresponse.FAILED, rdata)
