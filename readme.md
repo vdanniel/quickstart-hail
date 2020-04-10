@@ -91,7 +91,7 @@ The Service Catalog product for the Hail EMR cluster will deploy a single master
 
 The [AWS Systems Manager Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) (SSM) can be used to gain ingress to the EMR nodes.  This agent is pre-installed on the AMI.  To allow SageMaker notebook instance to connect to the Hail cluster nodes, set the following parameter to `true`.
 
-    ![emr-ssm](docs/images/overview/emr-ssm.png)
+![emr-ssm](docs/images/overview/emr-ssm.png)
 
 Notebook service catalog deployments will also require a parameter adjustment to complete access.
 
@@ -113,11 +113,11 @@ The Service Catalog product for the SageMaker Notebook Instance deploys a single
 
 CloudFormation parameters exist on both the EMR Cluster and SageMaker notebook products to optionally allow notebook instances shell access via SSM.  Set the following parameter to `true` on when deploying your notebook product to allow SSM access.
 
-    ![sagemaker-ssm](docs/images/overview/sagemaker-ssm.png)
+![sagemaker-ssm](docs/images/overview/sagemaker-ssm.png)
 
 Example connection from Jupyter Lab shell:
 
-    ![sagemaker-ssm-example](docs/overview/sagemaker-ssm-example.png)
+![sagemaker-ssm-example](docs/overview/sagemaker-ssm-example.png)
 
 ## Public AMIs
 
