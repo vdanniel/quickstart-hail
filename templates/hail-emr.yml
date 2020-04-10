@@ -12,8 +12,8 @@ Parameters:
     AllowedValues:
       - "false"
       - "true"
-    Default: "true"
-    Description: "Allow Systems Manager (SSM) shell access from Sagemaker notebooks.  Must also be set to true on SageMaker CloudFormation stacks."
+    Default: "false"
+    Description: "Must also be set to true on SageMaker CloudFormation stacks."
     Type: "String"
 
   pClusterName:
@@ -23,7 +23,7 @@ Parameters:
     Type: "String"
 
   pEmrCoreInstanceCount:
-    Default: 2
+    Default: 1
     Description: "Must be 1 or greater."
     MinValue: 1 # Cannot be 0.
     Type: "Number"
@@ -425,6 +425,8 @@ Metadata:
           - "pTagEnvironment"
           - "pTagOwner"
     ParameterLabels:
+      pAllowSsmShell:
+        default: "Allow SSM Shell Access from SageMaker Notebook Instances"
       pAmi:
         default: "Hail AMI"
       pClusterName:

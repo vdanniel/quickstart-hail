@@ -8,7 +8,7 @@ Parameters:
       - "false"
       - "true"
     Default: "false"
-    Description: "Allow Systems Manager (SSM) shell access to EMR nodes.  Must also be set to true on EMR CloudFormation stacks."
+    Description: "Must also be set to true on EMR CloudFormation stacks."
     Type: "String"
 
   pInstanceType:
