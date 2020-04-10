@@ -117,7 +117,7 @@ CloudFormation parameters exist on both the EMR Cluster and SageMaker notebook p
 
 Example connection from Jupyter Lab shell:
 
-![sagemaker-ssm-example](docs/overview/sagemaker-ssm-example.png)
+![sagemaker-ssm-example](docs/images/overview/sagemaker-ssm-example.png)
 
 ## Public AMIs
 
