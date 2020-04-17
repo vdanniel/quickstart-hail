@@ -16,6 +16,7 @@ cat <<EOF
     --roda-bucket      [RODA S3 Bucket Name] - REQUIRED
     --subnet-id        [Subnet ID]           - REQUIRED
     --subnet-type      [Subnet Type]         - REQUIRED.  public or private
+    --var-file         [Full File Path]      - REQUIRED
     --vpc-id           [VPC ID]              - REQUIRED
     --hail-version     [Number Version]      - OPTIONAL.  If omitted, master branch will be used.
     --htslib-version   [HTSLIB Version]      - OPTIONAL.  If omitted, develop branch will be used.
@@ -28,6 +29,7 @@ cat <<EOF
                     --roda-bucket hail-vep-pipeline \\
                     --subnet-id subnet-99999999 \\
                     --subnet-type private \\
+                    --var-file builds/emr-5.29.0.vars \\
                     --vpc-id vpc-99999999 \\
                     --hail-version 0.2.34 \\
                     --htslib-version 1.10.2 \\
@@ -68,6 +70,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --roda-bucket)
             RODA_BUCKET="$2"
+            shift
+            shift
+            ;;
+        --var-file)
+            CORE_VAR_FILE="$2"
             shift
             shift
             ;;
@@ -126,5 +133,5 @@ packer build --var hail_name_version="$HAIL_NAME_VERSION" \
              --var ssh_interface="$SSH_INTERFACE" \
              --var vep_version="$VEP_VERSION" \
              --var vpc_id="$VPC_ID" \
-             --var-file=build.vars \
+             --var-file="$CORE_VAR_FILE" \
              amazon-linux.json

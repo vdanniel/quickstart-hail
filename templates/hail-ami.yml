@@ -145,7 +145,7 @@ Resources:
         EnvironmentVariables:
           - Name: "CORE_VAR_FILE"
             Type: "PLAINTEXT"
-            Value: "builds/emr-5.29.0.vars"
+            Value: "build.vars"
           - Name: "HAIL_VERSION"
             Type: "PLAINTEXT"
             Value: "0.2.XX"
@@ -176,7 +176,7 @@ Resources:
       Name: "hail-vep"
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
-        BuildSpec: "codebuild/buildspec.yml"
+        BuildSpec: "buildspec.yml"
         Location: !Sub "${pHailBucket}/${pS3packerZipLocation}"
         Type: "S3"
       VpcConfig:
@@ -201,7 +201,7 @@ Resources:
         EnvironmentVariables:
           - Name: "CORE_VAR_FILE"
             Type: "PLAINTEXT"
-            Value: "builds/emr-5.29.0.vars"
+            Value: "build.vars"
           - Name: "HAIL_VERSION"
             Type: "PLAINTEXT"
             Value: "0.2.xx"
@@ -226,7 +226,7 @@ Resources:
       Name: "hail"
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
-        BuildSpec: "codebuild/buildspec.yml"
+        BuildSpec: "buildspec.yml"
         Location: !Sub "${pHailBucket}/${pS3packerZipLocation}"
         Type: "S3"
       VpcConfig:
@@ -251,7 +251,7 @@ Resources:
         EnvironmentVariables:
           - Name: "CORE_VAR_FILE"
             Type: "PLAINTEXT"
-            Value: "builds/emr-5.29.0.vars"
+            Value: "build.vars"
           - Name: "VEP_VERSION"
             Type: "PLAINTEXT"
             Value: "XX"
@@ -279,7 +279,7 @@ Resources:
       Name: "hail-master_vep"
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
-        BuildSpec: "codebuild/buildspec.yml"
+        BuildSpec: "buildspec.yml"
         Location: !Sub "${pHailBucket}/${pS3packerZipLocation}"
         Type: "S3"
       VpcConfig:
@@ -304,7 +304,7 @@ Resources:
         EnvironmentVariables:
           - Name: "CORE_VAR_FILE"
             Type: "PLAINTEXT"
-            Value: "builds/emr-5.29.0.vars"
+            Value: "build.vars"
           - Name: "HTSLIB_VERSION"
             Type: "PLAINTEXT"
             Value: !Ref pHtslibVersion
@@ -326,7 +326,7 @@ Resources:
       Name: "hail-master"
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
-        BuildSpec: "codebuild/buildspec.yml"
+        BuildSpec: "buildspec.yml"
         Location: !Sub "${pHailBucket}/${pS3packerZipLocation}"
         Type: "S3"
       VpcConfig:
