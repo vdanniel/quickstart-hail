@@ -1,0 +1,230 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "AWS Hail Quickstart"
+
+Parameters:
+
+  QSS3BucketName:
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    ConstraintDescription: "Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+    Default: "aws-quickstart"
+    Description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+    Type: "String"
+
+  QSS3KeyPrefix:
+    AllowedPattern: "^[0-9a-zA-Z-/]*$"
+    ConstraintDescription: "Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+    Default: "quickstart-hail/"
+    Description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+    Type: "String"
+
+  pKmsEbsArn:
+    Description: "Optional - If region level EBS encryption is enabled specify the full key ARN.  Otherwise, leave blank.  This does NOT automatically encrypt your AMI."
+    Default: ""
+    Type: "String"
+
+  pS3packerZipLocation:
+    Default: "ami/packer.zip"
+    Description: "S3 key in the Hail bucket where Packer zip file will be uploaded.  This supports custom AMI building."
+    Type: "String"
+
+  pHailBucket:
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    Description: "EMR logs, cluster manifests, and VEP configuration files are placed here."
+    Type: "String"
+
+  pCreateHailBucket:
+    Type: "String"
+    Description: "Select No to use an existing bucket."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "yes"
+
+  pSageMakerBucket:
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    Description: "Bucket for common notebooks and SageMaker home directory backups."
+    Type: "String"
+
+  pCreateSageMakerBucket:
+    Type: "String"
+    Description: "Select No to use an existing bucket."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "yes"
+
+  pTagEnvironment:
+    AllowedValues:
+      - "production"
+      - "staging"
+      - "development"
+    Default: "development"
+    Description: "Environment type for default resource tagging."
+    Type: "String"
+
+  pTagOwner:
+    Type: "String"
+    Description: "Optional - Owner of the resources.  Person/Department, etc."
+    Default: ""
+
+  pTargetVpc:
+    Type: "String"
+    Description: "New will create AWS Quickstart VPC.  For existing VPCs, set the remaining network settings parameters."
+    AllowedValues:
+      - "new"
+      - "existing"
+    Default: "existing"
+
+  pNewVpcCidr:
+    Type: "String"
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+    Description: "Required for new VPC creation - A /16 address space for a new VPC."
+    Default: "10.0.0.0/16"
+
+  pVpcId:
+    Description: "Required for existing VPC target."
+    Type: "String"
+    Default: ""
+
+  pSubnetId:
+    Description: "Required for existing VPC target. Subnet for EMR Cluster and SageMaker Notebook Instances.  Must reside in the existing VPC."
+    Type: "String"
+    Default: ""
+
+  pSubnetType:
+    Description: "Required for existing VPC target. Public subnets deploy resources with public IPs.  Private subnets do not.  Private subnets are recommended."
+    Type: "String"
+    AllowedValues:
+      - "public"
+      - "private"
+    Default: "private"
+
+Metadata:
+
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "AWS Quick Start Configuration"
+        Parameters:
+         - "QSS3BucketName"
+         - "QSS3KeyPrefix"
+      - Label:
+          default: "Network Settings"
+        Parameters:
+          - "pTargetVpc"
+          - "pNewVpcCidr"
+          - "pVpcId"
+          - "pSubnetId"
+          - "pSubnetType"
+      - Label:
+          default: "Settings"
+        Parameters:
+          - "pHailBucket"
+          - "pCreateHailBucket"
+          - "pS3packerZipLocation"
+          - "pSageMakerBucket"
+          - "pCreateSageMakerBucket"
+          - "pKmsEbsArn"
+      - Label:
+          default: "Tagging"
+        Parameters:
+          - "pTagEnvironment"
+          - "pTagOwner"
+    ParameterLabels:
+      QSS3BucketName:
+        default: Quick Start S3 bucket name
+      QSS3KeyPrefix:
+        default: Quick Start S3 key prefix
+      pKmsEbsArn:
+        default: "EBS KMS Key ARN"
+      pS3packerZipLocation:
+        default: "Packer Zip S3 Location"
+      pHailBucket:
+        default: "Hail Bucket Name"
+      pCreateHailBucket:
+        default: "Create Hail Bucket"
+      pSageMakerBucket:
+        default: "Sagemaker Home Directory Bucket Name"
+      pCreateSageMakerBucket:
+        default: "Create SageMaker Bucket"
+      pTagOwner:
+        default: "Owner Tag"
+      pTagEnvironment:
+        default: "Environment Tag"
+      pTargetVpc:
+        default: "Target VPC"
+      pNewVpcCidr:
+        default: "New VPC CIDR"
+      pVpcId:
+        default: "Existing VPC ID"
+      pSubnetId:
+        default: "Existing Subnet ID"
+      pSubnetType:
+        default: "Existing Subnet Type"
+
+Conditions:
+
+    createVpc: !Equals [!Ref pTargetVpc, "new"]
+
+Resources:
+
+  core:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-core.yml"
+      Parameters:
+        pHailBucket: !Ref pHailBucket
+        pCreateHailBucket: !Ref pCreateHailBucket
+        pKmsEbsArn: !Ref pKmsEbsArn
+        pS3packerZipLocation: !Ref pS3packerZipLocation
+        pSageMakerBucket: !Ref pSageMakerBucket
+        pCreateSageMakerBucket: !Ref pCreateSageMakerBucket
+        pSubnetId: !If [createVpc, !GetAtt 'vpc.Outputs.PrivateSubnet1AID', !Ref pSubnetId]
+        pSubnetType: !If [createVpc, "private", !Ref pSubnetType]
+        pTagEnvironment: !Ref pTagEnvironment
+        pTagOwner: !Ref pTagOwner
+        pVpcId: !If [createVpc, !GetAtt 'vpc.Outputs.VPCID', !Ref pVpcId]
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
+      TimeoutInMinutes: 5
+
+  vpc:
+    Type: "AWS::CloudFormation::Stack"
+    Condition: createVpc
+    Properties:
+      TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}/submodules/quickstart-aws-vpc/templates/aws-vpc.template"
+      Parameters:
+        AvailabilityZones: !Join
+        - ','
+        - - !Select
+            - 0
+            - Fn::GetAZs: !Ref 'AWS::Region'
+          - !Select
+            - 1
+            - Fn::GetAZs: !Ref 'AWS::Region'
+        VPCCIDR: !Ref pNewVpcCidr
+        PublicSubnet1CIDR: !Select [ 0, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
+        PrivateSubnet1ACIDR: !Select [ 1, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
+        PrivateSubnet1BCIDR: !Select [ 2, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
+        PublicSubnet2CIDR: !Select [ 3, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
+        PrivateSubnet2ACIDR: !Select [ 4, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
+        PrivateSubnet2BCIDR: !Select [ 5, !Cidr [ !Ref pNewVpcCidr, 6, 12 ]]
+      TimeoutInMinutes: 10
+
+Outputs:
+
+  portfolio:
+    Description: "Service Catalog Portfolio"
+    Value: !GetAtt core.Outputs.portfolio
+
+  codeBuildConsole:
+    Description: "CodeBuild Project Console URL"
+    Value: !Sub "https://console.aws.amazon.com/codesuite/codebuild/projects?region=${AWS::Region}"
+
+  bucketHail:
+    Description: "Hail S3 Bucket"
+    Value: !GetAtt core.Outputs.bucketHail
+
+  bucketSageMaker:
+    Description: "SageMaker S3 Bucket"
+    Value: !GetAtt core.Outputs.bucketSageMaker
