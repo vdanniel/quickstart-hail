@@ -1,0 +1,26 @@
+project:
+  name: quickstart-hail
+  regions:
+    - us-east-1
+
+general:
+  parameters:
+      pKmsEbsArn: ''
+      pS3packerZipLocation: ami/packer.zip
+      pHailBucket: $[taskcat_autobucket]
+      pSageMakerBucket: $[taskcat_autobucket]
+      pSubnetType: private
+      pTagOwner: ''
+      pTagEnvironment: development
+      pCreateHailBucket: "yes"
+      pCreateSageMakerBucket: "yes"
+
+tests:
+  vpcNew:
+    parameters:
+      pTargetVpc: new
+      pNewVpcCidr: 10.0.0.0/16
+      pVpcId: ''
+      pSubnetId: ''
+      pSubnetType: private
+    template: ./templates/hail-master.yml
