@@ -22,11 +22,6 @@ Parameters:
     Default: ""
     Type: "String"
 
-  pS3packerZipLocation:
-    Default: "ami/packer.zip"
-    Description: "S3 key in the Hail bucket where Packer zip file will be uploaded.  This supports custom AMI building."
-    Type: "String"
-
   pHailBucket:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
     Description: "EMR logs, cluster manifests, and VEP configuration files are placed here."
@@ -121,7 +116,6 @@ Metadata:
         Parameters:
           - "pHailBucket"
           - "pCreateHailBucket"
-          - "pS3packerZipLocation"
           - "pSageMakerBucket"
           - "pCreateSageMakerBucket"
           - "pKmsEbsArn"
@@ -137,8 +131,6 @@ Metadata:
         default: Quick Start S3 key prefix
       pKmsEbsArn:
         default: "EBS KMS Key ARN"
-      pS3packerZipLocation:
-        default: "Packer Zip S3 Location"
       pHailBucket:
         default: "Hail Bucket Name"
       pCreateHailBucket:
@@ -176,7 +168,6 @@ Resources:
         pHailBucket: !Ref pHailBucket
         pCreateHailBucket: !Ref pCreateHailBucket
         pKmsEbsArn: !Ref pKmsEbsArn
-        pS3packerZipLocation: !Ref pS3packerZipLocation
         pSageMakerBucket: !Ref pSageMakerBucket
         pCreateSageMakerBucket: !Ref pCreateSageMakerBucket
         pSubnetId: !If [createVpc, !GetAtt 'vpc.Outputs.PrivateSubnet1AID', !Ref pSubnetId]
