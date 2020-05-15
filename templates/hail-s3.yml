@@ -85,7 +85,7 @@ Resources:
     Type: "AWS::S3::Bucket"
     Condition: createSageMakerBucket
     Properties:
-      DeletionPolicy: Delete
+      DeletionPolicy: Retain
       BucketName: !Ref pSageMakerBucket
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -109,7 +109,7 @@ Resources:
     Type: "AWS::S3::Bucket"
     Condition: createHailBucket
     Properties:
-      DeletionPolicy: Delete
+      DeletionPolicy: Retain
       BucketName: !Ref pHailBucket
       BucketEncryption:
         ServerSideEncryptionConfiguration:
