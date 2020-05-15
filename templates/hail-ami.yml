@@ -21,11 +21,6 @@ Parameters:
     Description: "This parameter is set by the S3 stack.  No changes should be necessary.  Contains VEP and LOFTEE files."
     Type: "String"
 
-  pS3packerZipLocation:
-    Default: "ami/packer.zip"
-    Description: "S3 key in the Hail bucket where Packer zip files will be uploaded.  This supports custom AMI building."
-    Type: "String"
-
   pSamtoolsVersion:
     Description: "Version of Samtools to install - https://github.com/samtools/htslib/releases"
     Default: "1.10"
@@ -76,7 +71,6 @@ Metadata:
           default: "General Settings"
         Parameters:
           - "pHailBucket"
-          - "pS3packerZipLocation"
           - "pRodaHailBucket"
           - "pKmsEbsArn"
           - "pHtslibVersion"
@@ -95,8 +89,6 @@ Metadata:
         default: "SSM Parameter for AWS RODA Bucket"
       pHailBucket:
         default: "SSM Parameter for the Hail Bucket"
-      pS3packerZipLocation:
-        default: "Packer Zip S3 Location"
       pSamtoolsVersion:
         default: "Samtools Version"
       pVpcId:
@@ -145,7 +137,7 @@ Resources:
         EnvironmentVariables:
           - Name: "CORE_VAR_FILE"
             Type: "PLAINTEXT"
-            Value: "builds/emr-5.29.0.vars"
+            Value: "build.vars"
           - Name: "HAIL_VERSION"
             Type: "PLAINTEXT"
             Value: "0.2.XX"
@@ -176,8 +168,8 @@ Resources:
       Name: "hail-vep"
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
-        BuildSpec: "codebuild/buildspec.yml"
-        Location: !Sub "${pHailBucket}/${pS3packerZipLocation}"
+        BuildSpec: "buildspec.yml"
+        Location: !Sub "${pHailBucket}/ami/packer.zip"
         Type: "S3"
       VpcConfig:
         !If
@@ -201,7 +193,7 @@ Resources:
         EnvironmentVariables:
           - Name: "CORE_VAR_FILE"
             Type: "PLAINTEXT"
-            Value: "builds/emr-5.29.0.vars"
+            Value: "build.vars"
           - Name: "HAIL_VERSION"
             Type: "PLAINTEXT"
             Value: "0.2.xx"
@@ -226,8 +218,8 @@ Resources:
       Name: "hail"
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
-        BuildSpec: "codebuild/buildspec.yml"
-        Location: !Sub "${pHailBucket}/${pS3packerZipLocation}"
+        BuildSpec: "buildspec.yml"
+        Location: !Sub "${pHailBucket}/ami/packer.zip"
         Type: "S3"
       VpcConfig:
         !If
@@ -251,7 +243,7 @@ Resources:
         EnvironmentVariables:
           - Name: "CORE_VAR_FILE"
             Type: "PLAINTEXT"
-            Value: "builds/emr-5.29.0.vars"
+            Value: "build.vars"
           - Name: "VEP_VERSION"
             Type: "PLAINTEXT"
             Value: "XX"
@@ -279,8 +271,8 @@ Resources:
       Name: "hail-master_vep"
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
-        BuildSpec: "codebuild/buildspec.yml"
-        Location: !Sub "${pHailBucket}/${pS3packerZipLocation}"
+        BuildSpec: "buildspec.yml"
+        Location: !Sub "${pHailBucket}/ami/packer.zip"
         Type: "S3"
       VpcConfig:
         !If
@@ -304,7 +296,7 @@ Resources:
         EnvironmentVariables:
           - Name: "CORE_VAR_FILE"
             Type: "PLAINTEXT"
-            Value: "builds/emr-5.29.0.vars"
+            Value: "build.vars"
           - Name: "HTSLIB_VERSION"
             Type: "PLAINTEXT"
             Value: !Ref pHtslibVersion
@@ -326,8 +318,8 @@ Resources:
       Name: "hail-master"
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
-        BuildSpec: "codebuild/buildspec.yml"
-        Location: !Sub "${pHailBucket}/${pS3packerZipLocation}"
+        BuildSpec: "buildspec.yml"
+        Location: !Sub "${pHailBucket}/ami/packer.zip"
         Type: "S3"
       VpcConfig:
         !If

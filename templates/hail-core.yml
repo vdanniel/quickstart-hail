@@ -35,11 +35,6 @@ Parameters:
     Default: ""
     Type: "String"
 
-  pS3packerZipLocation:
-    Default: "ami/packer.zip"
-    Description: "S3 key in the Hail bucket where Packer zip files will be uploaded.  This supports custom AMI building."
-    Type: "String"
-
   pSageMakerBucket:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
     Description: "Bucket for common Jupyter notebooks and SageMaker home directory backups."
@@ -108,7 +103,6 @@ Resources:
         pKmsEbsArn: !Ref pKmsEbsArn
         pHailBucket: !Ref pHailBucket
         pRodaHailBucket: !GetAtt rodaBucketParameter.Value
-        pS3packerZipLocation: !Ref pS3packerZipLocation
         pSubnetId: !Ref pSubnetId
         pSubnetType: !Ref pSubnetType
         pVpcId: !Ref pVpcId
@@ -234,26 +228,25 @@ Resources:
       Code:
         ZipFile: |
           import boto3
-          import cfnresponse
           import os
+          import cfnresponse
+          import shutil
 
           client = boto3.client("s3")
+          s3_packer_dest = "ami/packer.zip"
 
 
-          def sync_path(source_bucket, dest_bucket, source_prefix, directory):
+          def s3_sync_buckets(source_bucket, dest_bucket, source_prefix, directory):
               for obj in client.list_objects_v2(
                   Bucket=source_bucket, Prefix=source_prefix + directory
               )["Contents"]:
-
                   source_file = obj["Key"]
-
                   # Omit "directories" from copy
                   if not source_file.endswith("/"):
                       dest_filename = os.path.split(source_file)[1]
                       print(
                           f"Copy s3://{source_bucket}/{source_file} => s3://{dest_bucket}/{directory}/{dest_filename}"
                       )
-
                       client.copy_object(
                           Bucket=dest_bucket,
                           Key=directory + "/" + dest_filename,
@@ -261,15 +254,34 @@ Resources:
                       )
 
 
+          def s3_sync_local(source_bucket, source_prefix, dest_directory):
+              for obj in client.list_objects_v2(Bucket=source_bucket, Prefix=source_prefix)[
+                  "Contents"
+              ]:
+                  source_file = obj["Key"]
+                  if source_file.endswith("/"):
+                      os.makedirs(f"{dest_directory}/{source_file}")
+                  else:
+                      local_dest_dir = f"{dest_directory}/{os.path.dirname(source_file)}"
+
+                      if not os.path.exists(local_dest_dir):
+                          os.makedirs(local_dest_dir)
+
+                      print(
+                          f"Copy s3://{source_bucket}/{source_file} => {dest_directory}/{source_file}"
+                      )
+                      client.download_file(
+                          source_bucket, source_file, f"{dest_directory}/{source_file}"
+                      )
+
+
           def lambda_handler(event, context):
               print(event)
-
               try:
                   source_bucket = event["ResourceProperties"]["QSS3BucketName"]
                   quickstart_prefix = event["ResourceProperties"]["QSS3KeyPrefix"]
                   hail_bucket = event["ResourceProperties"]["HailBucketName"]
                   sagemaker_bucket = event["ResourceProperties"]["SageMakerBucketName"]
-
                   sync_plan = [
                       {
                           "source_path": quickstart_prefix + "sagemaker/",
@@ -284,20 +296,37 @@ Resources:
                   ]
 
                   if event["RequestType"] in ["Create", "Update"]:
+
                       for obj in sync_plan:
                           for directory in obj["sub_directories"]:
-                              sync_path(
+                              s3_sync_buckets(
                                   source_bucket, obj["dest_bucket"], obj["source_path"], directory
                               )
 
+                      # Copy quickstart packer directory to local file system.
+                      packer_dir = f"/tmp/{quickstart_prefix}packer"
+                      s3_sync_local(source_bucket, quickstart_prefix + "packer/", "/tmp")
+
+                      # Zip and seed user's Hail bucket for custom AMI builds.
+                      zip_name = shutil.make_archive("/tmp/packer", "zip", packer_dir)
+                      f = open(zip_name, "rb")
+                      zip_contents = f.read()
+                      f.close()
+                      client.put_object(Body=zip_contents, Bucket=hail_bucket, Key=s3_packer_dest)
+                      print(f"Copy {zip_name} to s3://{hail_bucket}/{s3_packer_dest}")
+                      shutil.rmtree(f"/tmp/{quickstart_prefix}")
+
                       rdata = {"Status": "SUCCESS"}
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, rdata)
+
                   elif event["RequestType"] == "Delete":
+
                       print("Delete Request by CFN...")
                       rdata = {"Status": "Success"}
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, rdata)
 
               except Exception as e:
+
                   print("[ERROR] - %s" % str(e))
                   rdata = {"Error": "Could not perform the operation"}
                   cfnresponse.send(event, context, cfnresponse.FAILED, rdata)
