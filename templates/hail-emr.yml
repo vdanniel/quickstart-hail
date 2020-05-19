@@ -5,8 +5,8 @@ Description: "EMR with Hail and VEP"
 Parameters:
 
   pAmi:
-    Description: "Packer built in the local account, or use public AMI."
-    Type: "AWS::EC2::Image::Id"
+    Description: "(Optional) Custom AMI, specific version from the public AMI list, or empty value.  If empty, the latest public Hail with VEP AMI will be used."
+    Type: "String"
 
   pAllowSsmShell:
     AllowedValues:
@@ -394,8 +394,8 @@ Metadata:
       - Label:
           default: "Cluster Primary Settings"
         Parameters:
-          - "pAmi"
           - "pClusterName"
+          - "pAmi"
           - "pEmrReleaseLabel"
           - "pEmrInstanceRootVolSize"
           - "pKmsEbsArn"
@@ -413,7 +413,7 @@ Metadata:
           - "pEmrCoreInstanceSize"
           - "pEmrCoreInstanceDataVolSize"
       - Label:
-          default: "Autoscaling Task Node Settings"
+          default: "Auto Scaling Task Node Settings"
         Parameters:
           - "pTaskNodeMarket"
           - "pEmrMinTaskNodeCount"
@@ -468,10 +468,47 @@ Metadata:
       pVpcId:
         default: "VPC ID"
 
+Mappings:
+
+  Region:
+    eu-north-1:
+      ami: 'ami-0097c8916181505c5'
+    ap-south-1:
+      ami: 'ami-0cc18a6e8cf105185'
+    eu-west-3:
+      ami: 'ami-09f35326ba84d2ee0'
+    eu-west-2:
+      ami: 'ami-04bbc6780b6719abe'
+    eu-west-1:
+      ami: 'ami-05adfeb1ffea4f488'
+    ap-northeast-2:
+      ami: 'ami-0fac2662a22702e92'
+    ap-northeast-1:
+      ami: 'ami-0a2a15ed71805f23d'
+    sa-east-1:
+      ami: 'ami-0ea74a00f1109fe14'
+    ca-central-1:
+      ami: 'ami-052c9e8e247ad39b1'
+    ap-southeast-1:
+      ami: 'ami-07124736552a4152b'
+    ap-southeast-2:
+      ami: 'ami-0fa25f9d65099152c'
+    eu-central-1:
+      ami: 'ami-0a9294d79a555d742'
+    us-east-1:
+      ami: 'ami-0f33e21674eed03c6'
+    us-east-2:
+      ami: 'ami-03cc99a0a57b9a8f4'
+    us-west-1:
+      ami: 'ami-0ed287d132c16a457'
+    us-west-2:
+      ami: 'ami-083d074beb4c62cfc'
+
 Conditions:
 
   CondEnableEncryption: !Not [ !Equals [ !Ref pKmsEbsArn, "" ] ]
   CondCreateTaskNodes:  !Not [ !Equals [ !Ref pEmrMaxTaskNodeCount, "0" ] ]
+  CondCustomAmi: !Not [ !Equals [ !Ref pAmi, "" ] ]
 
 Resources:
 
@@ -527,7 +564,10 @@ Resources:
         - Classification: "emrfs-site"
           ConfigurationProperties:
             fs.s3.maxConnections: "1000"
-      CustomAmiId: !Ref pAmi
+      CustomAmiId: !If
+        - CondCustomAmi
+        - !Ref pAmi
+        - !FindInMap [ Region, !Ref "AWS::Region", ami ]
       EbsRootVolumeSize: !Ref pEmrInstanceRootVolSize
       Instances:
         AdditionalMasterSecurityGroups:
