@@ -85,7 +85,6 @@ Resources:
     Type: "AWS::S3::Bucket"
     Condition: createSageMakerBucket
     Properties:
-      DeletionPolicy: Retain
       BucketName: !Ref pSageMakerBucket
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -96,6 +95,7 @@ Resources:
           Value: !Ref pTagEnvironment
         - Key: "owner"
           Value: !Ref pTagOwner
+    DeletionPolicy: Retain
 
   sageMakerBucketParameter:
     Type: "AWS::SSM::Parameter"
@@ -109,7 +109,6 @@ Resources:
     Type: "AWS::S3::Bucket"
     Condition: createHailBucket
     Properties:
-      DeletionPolicy: Retain
       BucketName: !Ref pHailBucket
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -120,6 +119,8 @@ Resources:
           Value: !Ref pTagEnvironment
         - Key: "owner"
           Value: !Ref pTagOwner
+    DeletionPolicy: Retain
+
 
   hailBucketParameter:
     Type: "AWS::SSM::Parameter"
