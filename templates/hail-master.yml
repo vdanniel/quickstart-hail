@@ -112,7 +112,7 @@ Metadata:
           - "pSubnetId"
           - "pSubnetType"
       - Label:
-          default: "Settings"
+          default: "Hail Settings"
         Parameters:
           - "pHailBucket"
           - "pCreateHailBucket"

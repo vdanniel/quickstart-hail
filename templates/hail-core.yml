@@ -1,6 +1,60 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "Hail S3, AMI, and Service Catalog Stacks"
 
+Metadata:
+
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "AWS Quick Start Configuration"
+        Parameters:
+         - "QSS3BucketName"
+         - "QSS3KeyPrefix"
+      - Label:
+          default: "Network Settings"
+        Parameters:
+          - "pVpcId"
+          - "pSubnetId"
+          - "pSubnetType"
+      - Label:
+          default: "Hail Settings"
+        Parameters:
+          - "pHailBucket"
+          - "pCreateHailBucket"
+          - "pSageMakerBucket"
+          - "pCreateSageMakerBucket"
+          - "pKmsEbsArn"
+      - Label:
+          default: "Tagging"
+        Parameters:
+          - "pTagEnvironment"
+          - "pTagOwner"
+    ParameterLabels:
+      QSS3BucketName:
+        default: Quick Start S3 bucket name
+      QSS3KeyPrefix:
+        default: Quick Start S3 key prefix
+      pKmsEbsArn:
+        default: "EBS KMS Key ARN"
+      pHailBucket:
+        default: "Hail Bucket Name"
+      pCreateHailBucket:
+        default: "Create Hail Bucket"
+      pSageMakerBucket:
+        default: "Sagemaker Home Directory Bucket Name"
+      pCreateSageMakerBucket:
+        default: "Create SageMaker Bucket"
+      pTagOwner:
+        default: "Owner Tag"
+      pTagEnvironment:
+        default: "Environment Tag"
+      pVpcId:
+        default: "Existing VPC ID"
+      pSubnetId:
+        default: "Existing Subnet ID"
+      pSubnetType:
+        default: "Existing Subnet Type"
+
 Parameters:
 
   QSS3BucketName:
