@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Service Catalog Portfolio containing products for a Hail EMR cluster and SageMaker Jupyter Notebook instance."
+Description: "Service Catalog Portfolio containing products for a Hail EMR cluster and SageMaker Jupyter Notebook instance. (qs-1qp776mib)"
 
 Parameters:
 
