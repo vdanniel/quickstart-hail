@@ -466,12 +466,19 @@ Resources:
                   - "ec2:StopInstances"
                   - "ec2:TerminateInstances"
                 Resource: "*"
-        - PolicyName: "AdditionalPacker"
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - "iam:PassRole"
-                Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/hail-packer"  # PassRole on itself for EC2 handoff
-      RoleName: "hail-packer"
+
+  # self PassRole for Hail Packer role for EC2 handoff
+  policyHailPackerAdditionalPacker:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - "iam:PassRole"
+            Resource: !GetAtt roleHailPacker.Arn
+      PolicyName: "AdditionalPacker"
+      Roles:
+        - !Ref roleHailPacker
+      
