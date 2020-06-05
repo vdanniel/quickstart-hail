@@ -162,6 +162,9 @@ Resources:
           - Name: "SUBNET_TYPE"
             Type: "PLAINTEXT"
             Value: !Ref pSubnetType
+          - Name: "INSTANCE_PROFILE_NAME"
+            Type: "PLAINTEXT"
+            Value: !Ref roleHailPacker
         Image: alpine
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"
@@ -212,6 +215,9 @@ Resources:
           - Name: "SUBNET_TYPE"
             Type: "PLAINTEXT"
             Value: !Ref pSubnetType
+          - Name: "INSTANCE_PROFILE_NAME"
+            Type: "PLAINTEXT"
+            Value: !Ref roleHailPacker
         Image: alpine
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"
@@ -265,6 +271,9 @@ Resources:
           - Name: "SUBNET_TYPE"
             Type: "PLAINTEXT"
             Value: !Ref pSubnetType
+          - Name: "INSTANCE_PROFILE_NAME"
+            Type: "PLAINTEXT"
+            Value: !Ref roleHailPacker
         Image: alpine
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"
@@ -312,6 +321,9 @@ Resources:
           - Name: "SUBNET_TYPE"
             Type: "PLAINTEXT"
             Value: !Ref pSubnetType
+          - Name: "INSTANCE_PROFILE_NAME"
+            Type: "PLAINTEXT"
+            Value: !Ref roleHailPacker
         Image: alpine
         PrivilegedMode: true
         Type: "LINUX_CONTAINER"

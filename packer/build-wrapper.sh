@@ -17,6 +17,8 @@ cat <<EOF
     --subnet-id        [Subnet ID]           - REQUIRED
     --subnet-type      [Subnet Type]         - REQUIRED.  public or private
     --vpc-id           [VPC ID]              - REQUIRED
+    --instance-profile-name
+                       [Profile Name]        - REQUIRED
     --hail-version     [Number Version]      - OPTIONAL.  If omitted, master branch will be used.
     --htslib-version   [HTSLIB Version]      - OPTIONAL.  If omitted, develop branch will be used.
     --samtools-version [Samtools Version]    - OPTIONAL.  If omitted, master branch will be used.
@@ -29,6 +31,7 @@ cat <<EOF
                     --subnet-id subnet-99999999 \\
                     --subnet-type private \\
                     --vpc-id vpc-99999999 \\
+                    --instance-profile-name hail-packer-123abc \\
                     --hail-version 0.2.34 \\
                     --htslib-version 1.10.2 \\
                     --samtools-version 1.10 \\
@@ -86,6 +89,10 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --instance-profile-name)
+            INSTANCE_PROFILE_NAME="$2"
+            shift 2
+            ;;
     esac
 done
 
@@ -126,5 +133,6 @@ packer build --var hail_name_version="$HAIL_NAME_VERSION" \
              --var ssh_interface="$SSH_INTERFACE" \
              --var vep_version="$VEP_VERSION" \
              --var vpc_id="$VPC_ID" \
+             --var instance_profile_name="$INSTANCE_PROFILE_NAME" \
              --var-file=build.vars \
              amazon-linux.json
