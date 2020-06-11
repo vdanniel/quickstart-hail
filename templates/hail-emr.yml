@@ -335,23 +335,29 @@ Parameters:
     Type: "String"
 
   pKmsEbsArn:
-    Description: "(Optional) If the source AMI is encrypted specify the full key ARN.  Otherwise, leave blank.  This does NOT automatically enable EBS encryption."
+    Description: "(Optional) The full KMS Key ARN if region level EBS encryption is enabled. Note, this does NOT automatically encrypt your AMI."
     Default: ""
     Type: "String"
 
   pLivyAccessSecurityGroup:
-    Description: "This parameter is set by the hail-core stack. No changes should be necessary.  Security Group ID that will be allowed access to the master node on port 8998."
+    Description: "DO NOT CHANGE. SSM parameter set by the hail-core stack. Security Group ID that will be allowed access to the master node on port 8998."
     Default: "/hail/sagemaker/security-group-id"
+    AllowedValues:
+      - "/hail/sagemaker/security-group-id"
     Type: "AWS::SSM::Parameter::Value<String>"
 
   pHailBucket:
-    Description: "This parameter is set by the S3 stack.  No changes should be necessary.  Cluster Manifests will be put here on cluster launch under /manifests."
+    Description: "DO NOT CHANGE. SSM parameter set by the hail-s3 stack. Cluster Manifests will be put here on cluster launch under /manifests."
     Default: "/hail/s3/hail"
+    AllowedValues:
+      - "/hail/s3/hail"
     Type: "AWS::SSM::Parameter::Value<String>"
 
   pSubnetId:
-    Description: "This parameter is set by the hail-core stack. No changes should be necessary.  Nodes will be deployed in this subnet."
+    Description: "DO NOT CHANGE. SSM parameter set by the hail-core stack. Nodes will be deployed into this subnet."
     Default: "/hail/vpc/subnet-id"
+    AllowedValues:
+      - "/hail/vpc/subnet-id"
     Type: "AWS::SSM::Parameter::Value<String>"
 
   pTagEnvironment:
@@ -365,7 +371,7 @@ Parameters:
 
   pTagOwner:
     Default: ""
-    Description: "(Optional) - Owner of the resources.  Person/Department, etc."
+    Description: "(Optional) Owner for default resource tagging. Suggested values are <User Name>, <Department Name>, <Project Name>, etc."
     Type: "String"
 
   pTaskNodeMarket:
@@ -373,12 +379,14 @@ Parameters:
       - "ON_DEMAND"
       - "SPOT"
     Default: "ON_DEMAND"
-    Description: "Spot instances are used with a max bid of the on demand price."
+    Description: "Choose SPOT to use Spot instances for EMR Task Nodes. Spot instances are requested with a max bid of the on demand price."
     Type: "String"
 
   pVpcId:
-    Description: "This parameter is set by the hail-core stack. No changes should be necessary."
+    Description: "DO NOT CHANGE. SSM parameter set by the hail-core stack. VPC that the EMR cluster will be deployed into."
     Default: "/hail/vpc/id"
+    AllowedValues:
+      - "/hail/vpc/id"
     Type: "AWS::SSM::Parameter::Value<String>"
 
 Metadata:
@@ -386,13 +394,13 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Network Details"
+          default: "Network Configuration"
         Parameters:
           - "pVpcId"
           - "pSubnetId"
           - "pLivyAccessSecurityGroup"
       - Label:
-          default: "Cluster Primary Settings"
+          default: "Cluster Configuration"
         Parameters:
           - "pClusterName"
           - "pAmi"
@@ -403,17 +411,17 @@ Metadata:
           - "pEmrInstanceTerminationProtection"
           - "pAllowSsmShell"
       - Label:
-          default: "Master Instance Settings"
+          default: "Master Instance Configuration"
         Parameters:
           - "pEmrMasterInstanceSize"
       - Label:
-          default: "Core Instance Settings"
+          default: "Core Instance Configuration"
         Parameters:
           - "pEmrCoreInstanceCount"
           - "pEmrCoreInstanceSize"
           - "pEmrCoreInstanceDataVolSize"
       - Label:
-          default: "Auto Scaling Task Node Settings"
+          default: "Task Node Auto Scaling Configuration"
         Parameters:
           - "pTaskNodeMarket"
           - "pEmrMinTaskNodeCount"
