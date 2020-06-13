@@ -3,23 +3,23 @@ project:
   regions:
     - us-east-1
   parameters:
-      pKmsEbsArn: ''
+      KMSEbsKeyArn: ''
       pS3packerZipLocation: ami/packer.zip
-      pHailBucket: hail-$[taskcat_autobucket]
-      pSageMakerBucket: sg-$[taskcat_autobucket]
-      pSubnetType: private
-      pTagOwner: ''
-      pTagEnvironment: development
-      pCreateHailBucket: "yes"
-      pCreateSageMakerBucket: "yes"
+      HailS3BucketName: hail-$[taskcat_autobucket]
+      SageMakerS3BucketName: sg-$[taskcat_autobucket]
+      VPCSubnetType: private
+      TagOwner: ''
+      TagEnvironmentType: development
+      CreateHailBucket: "yes"
+      CreateSageMakerBucket: "yes"
       QSS3BucketName: $[taskcat_autobucket]
 
 tests:
   vpcNew:
     parameters:
-      pTargetVpc: new
-      pNewVpcCidr: 10.0.0.0/16
-      pVpcId: ''
-      pSubnetId: ''
-      pSubnetType: private
+      VPCTarget: new
+      VPCCIDR: 10.0.0.0/16
+      VPCId: ''
+      VPCSubnetId: ''
+      VPCSubnetType: private
     template: ./templates/hail-master.yml
