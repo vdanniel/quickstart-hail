@@ -51,7 +51,7 @@ Below is a diagram of the directory structure, followed by a description of the 
 
 The `builds` directory contains variable definitions that are used as arguments to the primary build JSON, [amazon-linux.json](amazon-linux.json).
 
-Target VPCs, which may exist in remote accounts, are broken out into individual files under `builds/vpcs`.  There is an example VPC var file in the repository.  The subnet ID variable in your var file must be a public subnet.  This allows the packer process in CodeBuild to connect to your instance via SSH.   Note that after any adjustments to the settings or files in `builds/vpcs` you will need to update the path to that file in the [hail-ami.yml](../hail-ami.yml) CloudFormation template for the appropriate CodeBuild project.
+Target VPCs, which may exist in remote accounts, are broken out into individual files under `builds/vpcs`.  There is an example VPC var file in the repository.  The subnet ID variable in your var file must be a public subnet.  This allows the packer process in CodeBuild to connect to your instance via SSH.   Note that after any adjustments to the settings or files in `builds/vpcs` you will need to update the path to that file in the [hail-ami.yaml](../hail-ami.yaml) CloudFormation template for the appropriate CodeBuild project.
 
 ### CodeBuild
 
@@ -72,9 +72,9 @@ The `scripts` directory contains bash scripts supporting the build components (V
 
 To build a custom Hail AMI for use with EMR, follow these steps:
 
-1. Deploy the S3 resources described in the [Deployment Guide](/readme.md#deployment-guide) contained in the `hail-s3.yml` template
+1. Deploy the S3 resources described in the [Deployment Guide](/readme.md#deployment-guide) contained in the `hail-s3.yaml` template
 
-2. Deploy the AWS CodeBuild resources described in the [Deployment Guide](/readme.md#deployment-guide) contained in the `hail-ami.yml` template
+2. Deploy the AWS CodeBuild resources described in the [Deployment Guide](/readme.md#deployment-guide) contained in the `hail-ami.yaml` template
 
 3. If you'll be using [VEP](https://useast.ensembl.org/info/docs/tools/vep/index.html) it will be pulled in from the [Registry of Open Data on AWS](https://registry.opendata.aws) (RODA).  There is no action required outside setting your VEP version during the CodeBuild operation.
 

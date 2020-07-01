@@ -22,4 +22,4 @@ tests:
       VPCId: ''
       VPCSubnetId: ''
       VPCSubnetType: private
-    template: ./templates/hail-master.yml
+    template: ./templates/hail-master.yaml
