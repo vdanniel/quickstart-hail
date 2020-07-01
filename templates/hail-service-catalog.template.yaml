@@ -34,7 +34,7 @@ Resources:
       Owner: "AWS"
       ProvisioningArtifactParameters:
         - Info:
-            LoadTemplateFromURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-emr.yaml"
+            LoadTemplateFromURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-emr.template.yaml"
 
   associationEmr:
     Type: "AWS::ServiceCatalog::PortfolioProductAssociation"
@@ -50,7 +50,7 @@ Resources:
       Owner: "AWS"
       ProvisioningArtifactParameters:
         - Info:
-            LoadTemplateFromURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-sagemaker.yaml"
+            LoadTemplateFromURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-sagemaker.template.yaml"
 
   associationSageMakerNotebook:
     Type: "AWS::ServiceCatalog::PortfolioProductAssociation"

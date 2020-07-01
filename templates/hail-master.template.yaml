@@ -165,7 +165,7 @@ Resources:
   core:
     Type: "AWS::CloudFormation::Stack"
     Properties:
-      TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-core.yaml"
+      TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-core.template.yaml"
       Parameters:
         pHailBucket: !Ref HailS3BucketName
         pCreateHailBucket: !Ref CreateHailBucket

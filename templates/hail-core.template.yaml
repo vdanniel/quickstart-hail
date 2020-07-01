@@ -138,7 +138,7 @@ Resources:
   stackS3:
     Type: "AWS::CloudFormation::Stack"
     Properties:
-      TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-s3.yaml"
+      TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-s3.template.yaml"
       Parameters:
         pHailBucket: !Ref pHailBucket
         pCreateHailBucket: !Ref pCreateHailBucket
@@ -153,7 +153,7 @@ Resources:
       - stackS3
     Type: "AWS::CloudFormation::Stack"
     Properties:
-      TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-ami.yaml"
+      TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-ami.template.yaml"
       Parameters:
         pKmsEbsArn: !Ref pKmsEbsArn
         pHailBucket: !Ref pHailBucket
