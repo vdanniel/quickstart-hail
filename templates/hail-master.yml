@@ -95,7 +95,8 @@ Parameters:
     Default: "private"
 
 Metadata:
-
+  QuickStartDocumentation:
+    EntrypointName: "Launch into a new VPC"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:

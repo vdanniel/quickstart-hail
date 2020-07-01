@@ -2,7 +2,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "Hail S3, AMI, and Service Catalog Stacks (qs-1qp776mgg)"
 
 Metadata:
-
+  QuickStartDocumentation:
+    EntrypointName: "Launch into an existing VPC"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
