@@ -1,4 +1,127 @@
 // Add steps as necessary for accessing the software, post-configuration, and testing. Don’t include full usage instructions for your software, but add links to your product documentation for that information.
-=== Test the deployment
+=== Grant permissions to the Hail 0.2 Service Catalog Portfolio
 
-<Add instructions for testing the deployment.>
+Open the AWS Service Catalog console and select the “Hail Products” portfolio
+
+image::../images/testing/Picture1.png[Picture1,width=648,height=439]
+
+Click on the “Groups, roles, and users (1)” tab and then click the “Add groups, roles, users” button”.
+
+image::../images/testing/Picture2.png[Picture2,width=648,height=439]
+
+Select the IAM users/roles/groups that you want to grant the ability to launch Hail clusters or notebooks. For example, I’m giving access to an IAM user below. Even though you launched the catalog, you still need to explicitly grant yourself permissions this way. So don’t forget to grant yourself access. 
+
+image::../images/testing/Picture3.png[Picture3,width=648,height=439]
+
+=== Launch a Hail Cluster
+
+Return to Service Catalog and click on the topmost “Products” link on the left gutter. Users who are not service catalogs administrators and visit the service catalog in the console will be taken directly to this location.
+
+Click on the stacked Dots on the “Hail EMR Cluster” product and choose the “Launch Product” button. 
+image::../images/testing/Picture4.png[Picture4,width=648,height=439]
+
+Provide a name for this Hail cluster, click next, and then you will be presented with the following Hail cluster options.
+
+. Cluster Primary Settings
+|===
+|Parameter label |Default |Description
+
+// Space needed to maintain table headers
+|Cluster Name |Requires input |Name of the EMR cluster
+|Hail AMI |Optional |(Optional) Custom AMI, specific version from the public AMI list, or empty value.  If empty, the latest public Hail with VEP AMI will be used.
+|EMR Release |emr-5.29.0 |AWS EMR release version to use for cluster nodes.
+|Root Volume Size |100 |Root volume size in GB for all cluster instances.
+|EBS KMS Key ARN |Optional |(Optional) The full KMS Key ARN if region level EBS encryption is enabled. Note, this does NOT automatically encrypt your AMI.
+|Instance Termination Protection |false |Select “true” to enable instance termination protection on Master and Core nodes of the cluster.
+|Allow SSM Shell Access from SageMaker Notebook Instances |false |Select “true” to allow SSM Shell access to cluster nodes from SageMaker Notebook instances. To fully enable, this same setting must also be set to “true” when creating SageMaker Notebook Instances.
+|===
+
+. Master Instance Settings
+|===
+|Parameter label |Default |Description
+
+// Space needed to maintain table headers
+|Master Node Size |m5.xlarge |Instance type to use for EMR master node
+|===
+
+. Core Instance Settings
+|===
+|Parameter label |Default |Description
+
+// Space needed to maintain table headers
+|Number of Core Nodes |1 |Number of core nodes to launch with the cluster. Must be >= 1.
+|Core Instance Size |r5.xlarge |Instanct type to use for EMR core nodes
+|Scratch Volume Size |100 |Secondary GP2 data volume size in GB for CORE nodes. Available on /mnt
+|===
+
+. Auto Scaling Task Node Settings
+|===
+|Parameter label |Default |Description
+
+// Space needed to maintain table headers
+|Market |ON_DEMAND |Select “SPOT” to use Spot instances for Task nodes. Spot instances are used with a max bid of the on demand price.
+|Minimum number of Task Nodes |1 |Value of 0 disables task nodes and auto scaling.
+|Maximum number of Task Nodes |1 |Must be equal to or greater than minimum.
+|Task Node Size |r5.large |Instance type to use for EMR task nodes
+|===
+
+. Tagging
+|===
+|Parameter label |Default |Description
+
+// Space needed to maintain table headers
+|Environment Tag |development |Environment type for default resource tagging.
+|Owner Tag |Optional |(Optional) - Owner of the resources. Person/Department, etc.
+|===
+
+Proceed through the Service Catalog wizard accepting default values for the “Tag Options”, “Notifications”, and “Review” phases of the wizard and then click the “Launch Button”.
+
+It will look like this while your cluster is being provisioned:
+
+image::../images/testing/cluster.png[Cluster,width=648,height=439]
+
+The status will change to succeeded when it is complete. 
+
+image::../images/testing/cluster_complete.png[Cluster complete,width=648,height=439]
+
+=== Launch a Hail Notebook
+
+Go back to Service Catalog’s Product list page, select the ‘Hail SageMaker Notebook Instance’ and choose ‘Launch product’. Provide a name for your Service Catalog product launch in the “Product version” phase of the launch wizard. Supply the following parameters when you get to the “Parameters” phase.
+
+. Instance Details
+===
+|Parameter label |Default |Description
+
+// Space needed to maintain table headers
+|Instance Name |Requires input |Used as the name of the notebook instance and S3 backup location. Username is recommend - E.g. jsmith
+|Instance Type |ml.t3.medium |Instance type to use for the Notebook Instance
+|Volume Size |20 |Size in GB of the EBS volume used by the Notebook Instance
+|Allow SSM Shell Access to EMR Nodes |false |Select “true” to allow SSM Shell access to cluster nodes from SageMaker Notebook instances. To fully enable, this same setting must also be set to “true” when creating an EMR cluster.
+|===
+
+. Tagging
+===
+|Parameter label |Default |Description
+
+// Space needed to maintain table headers
+|Environment Tag |development |Environment type for default resource tagging.
+|Owner Tag |Optional |(Optional) - Owner of the resources. Person/Department, etc.
+|===
+
+Proceed through the “Tag Options”, “Notificatons”, and “Review” phases of the wizard accepting all of the defaults and click “Launch”.
+
+image::../images/testing/review.png[Review,width=648,height=439]
+
+It should look like the following once the notebook is completed. 
+
+image::../images/testing/Launch.png[Launch,width=648,height=439]
+
+=== Open the notebook, connect to the cluster, and conquer
+
+Go to Amazon SageMaker in the web console, and select “Notebook instances” in the left gutter. You will see a notebook instance with the ‘name’ tag you specified when you launched the notebook from Service Catalog. Select that notebook instance and click the “Open JupyterLab” hyperlink. 
+
+image::../images/testing/open_notebook.png[Open notebook,width=648,height=439]
+
+Once the notebook launches, navigate to the “common-notebooks” folder to see some example notebooks that show how to connect to the EMR cluster and begin your Hail session. 
+
+image::../images/testing/notebook.png[Notebook,width=648,height=439]

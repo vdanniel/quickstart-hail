@@ -2,4 +2,6 @@
 // Briefly describe the software. Use consistent and clear branding. 
 // Include the benefits of using the software on AWS, and provide details on usage scenarios.
 
-<Describe how the software works on AWS.>
+Hail is maintained by a team in the https://www.nealelab.is[Neale] lab at the https://www.broadinstitute.org/stanley[Stanley Center for Psychiatric Research] of the https://www.broadinstitute.org/[Broad Institute of MIT and Harvard] and the https://www.atgu.mgh.harvard.edu/[Analytic and Translational Genetics Unit]https://www.massgeneral.org[of Massachusetts General Hospital].
+This QuickStart packages up Hail into your AWS environment and makes it easy to spin up clusters and integrated notebooks for analysis.
+
