@@ -89,7 +89,7 @@ image::../images/testing/cluster_complete.png[Cluster complete,width=648,height=
 Go back to Service Catalog’s Product list page, select the ‘Hail SageMaker Notebook Instance’ and choose ‘Launch product’. Provide a name for your Service Catalog product launch in the “Product version” phase of the launch wizard. Supply the following parameters when you get to the “Parameters” phase.
 
 . Instance Details
-===
+|===
 |Parameter label |Default |Description
 
 // Space needed to maintain table headers
@@ -100,7 +100,7 @@ Go back to Service Catalog’s Product list page, select the ‘Hail SageMaker N
 |===
 
 . Tagging
-===
+|===
 |Parameter label |Default |Description
 
 // Space needed to maintain table headers
