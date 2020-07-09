@@ -110,3 +110,6 @@ packer/packer.zip
 .idea
 .taskcat
 taskcat_outputs
+
+# docs
+index.html
