@@ -22,21 +22,23 @@ image::../images/testing/Picture4.png[Picture4,width=648,height=439]
 
 Provide a name for this Hail cluster, click next, and then you will be presented with the following Hail cluster options.
 
-. Cluster Primary Settings
+.Cluster Primary Settings
+[width="100%",cols="16%,11%,73%",options="header",]
 |===
 |Parameter label |Default |Description
 
 // Space needed to maintain table headers
-|Cluster Name |Requires input |Name of the EMR cluster
-|Hail AMI |Optional |(Optional) Custom AMI, specific version from the public AMI list, or empty value.  If empty, the latest public Hail with VEP AMI will be used.
+|Cluster Name |**__Requires input__** |Name of the EMR cluster
+|Hail AMI |'' |(Optional) Custom AMI, specific version from the public AMI list, or empty value.  If empty, the latest public Hail with VEP AMI will be used.
 |EMR Release |emr-5.29.0 |AWS EMR release version to use for cluster nodes.
 |Root Volume Size |100 |Root volume size in GB for all cluster instances.
-|EBS KMS Key ARN |Optional |(Optional) The full KMS Key ARN if region level EBS encryption is enabled. Note, this does NOT automatically encrypt your AMI.
+|EBS KMS Key ARN |'' |(Optional) The full KMS Key ARN if region level EBS encryption is enabled. Note, this does NOT automatically encrypt your AMI.
 |Instance Termination Protection |false |Select “true” to enable instance termination protection on Master and Core nodes of the cluster.
 |Allow SSM Shell Access from SageMaker Notebook Instances |false |Select “true” to allow SSM Shell access to cluster nodes from SageMaker Notebook instances. To fully enable, this same setting must also be set to “true” when creating SageMaker Notebook Instances.
 |===
 
-. Master Instance Settings
+.Master Instance Settings
+[width="100%",cols="16%,11%,73%",options="header",]
 |===
 |Parameter label |Default |Description
 
@@ -44,7 +46,8 @@ Provide a name for this Hail cluster, click next, and then you will be presented
 |Master Node Size |m5.xlarge |Instance type to use for EMR master node
 |===
 
-. Core Instance Settings
+.Core Instance Settings
+[width="100%",cols="16%,11%,73%",options="header",]
 |===
 |Parameter label |Default |Description
 
@@ -54,7 +57,8 @@ Provide a name for this Hail cluster, click next, and then you will be presented
 |Scratch Volume Size |100 |Secondary GP2 data volume size in GB for CORE nodes. Available on /mnt
 |===
 
-. Auto Scaling Task Node Settings
+.Auto Scaling Task Node Settings
+[width="100%",cols="16%,11%,73%",options="header",]
 |===
 |Parameter label |Default |Description
 
@@ -65,13 +69,14 @@ Provide a name for this Hail cluster, click next, and then you will be presented
 |Task Node Size |r5.large |Instance type to use for EMR task nodes
 |===
 
-. Tagging
+.Tagging
+[width="100%",cols="16%,11%,73%",options="header",]
 |===
 |Parameter label |Default |Description
 
 // Space needed to maintain table headers
 |Environment Tag |development |Environment type for default resource tagging.
-|Owner Tag |Optional |(Optional) - Owner of the resources. Person/Department, etc.
+|Owner Tag |'' |(Optional) - Owner of the resources. Person/Department, etc.
 |===
 
 Proceed through the Service Catalog wizard accepting default values for the “Tag Options”, “Notifications”, and “Review” phases of the wizard and then click the “Launch Button”.
@@ -88,24 +93,26 @@ image::../images/testing/cluster_complete.png[Cluster complete,width=648,height=
 
 Go back to Service Catalog’s Product list page, select the ‘Hail SageMaker Notebook Instance’ and choose ‘Launch product’. Provide a name for your Service Catalog product launch in the “Product version” phase of the launch wizard. Supply the following parameters when you get to the “Parameters” phase.
 
-. Instance Details
+.Instance Details
+[width="100%",cols="16%,11%,73%",options="header",]
 |===
 |Parameter label |Default |Description
 
 // Space needed to maintain table headers
-|Instance Name |Requires input |Used as the name of the notebook instance and S3 backup location. Username is recommend - E.g. jsmith
+|Instance Name |**__Requires input__** |Used as the name of the notebook instance and S3 backup location. Username is recommend - E.g. jsmith
 |Instance Type |ml.t3.medium |Instance type to use for the Notebook Instance
 |Volume Size |20 |Size in GB of the EBS volume used by the Notebook Instance
 |Allow SSM Shell Access to EMR Nodes |false |Select “true” to allow SSM Shell access to cluster nodes from SageMaker Notebook instances. To fully enable, this same setting must also be set to “true” when creating an EMR cluster.
 |===
 
-. Tagging
+.Tagging
+[width="100%",cols="16%,11%,73%",options="header",]
 |===
 |Parameter label |Default |Description
 
 // Space needed to maintain table headers
 |Environment Tag |development |Environment type for default resource tagging.
-|Owner Tag |Optional |(Optional) - Owner of the resources. Person/Department, etc.
+|Owner Tag |'' |(Optional) - Owner of the resources. Person/Department, etc.
 |===
 
 Proceed through the “Tag Options”, “Notificatons”, and “Review” phases of the wizard accepting all of the defaults and click “Launch”.
