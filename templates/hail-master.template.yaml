@@ -1,6 +1,68 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "AWS Hail Quickstart (qs-1qp776mh2)"
 
+Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Launch into a new VPC"
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+          - "VPCTarget"
+          - "VPCCIDR"
+          - "VPCId"
+          - "VPCSubnetId"
+          - "VPCSubnetType"
+      - Label:
+          default: "Hail Configuration"
+        Parameters:
+          - "HailS3BucketName"
+          - "CreateHailBucket"
+          - "SageMakerS3BucketName"
+          - "CreateSageMakerBucket"
+          - "KMSEbsKeyArn"
+      - Label:
+          default: "Tagging Configuration"
+        Parameters:
+          - "TagEnvironmentType"
+          - "TagOwner"
+      - Label:
+          default: "AWS Quick Start Configuration"
+        Parameters:
+         - "QSS3BucketName"
+         - "QSS3KeyPrefix"
+      
+    ParameterLabels:
+      QSS3BucketName:
+        default: Quick Start S3 bucket name
+      QSS3KeyPrefix:
+        default: Quick Start S3 key prefix
+      KMSEbsKeyArn:
+        default: "EBS KMS Key ARN"
+      HailS3BucketName:
+        default: "Hail S3 Bucket Name"
+      CreateHailBucket:
+        default: "Create Hail S3 Bucket"
+      SageMakerS3BucketName:
+        default: "Sagemaker Home Directory S3 Bucket Name"
+      CreateSageMakerBucket:
+        default: "Create SageMaker Home Directory S3 Bucket"
+      TagOwner:
+        default: "Owner"
+      TagEnvironmentType:
+        default: "Environment Type"
+      VPCTarget:
+        default: "VPC Target"
+      VPCCIDR:
+        default: "New VPC CIDR"
+      VPCId:
+        default: "Existing VPC ID"
+      VPCSubnetId:
+        default: "Existing Subnet ID"
+      VPCSubnetType:
+        default: "Existing Subnet Type"
+        
 Parameters:
 
   QSS3BucketName:
@@ -94,67 +156,6 @@ Parameters:
       - "private"
     Default: "private"
 
-Metadata:
-
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-      - Label:
-          default: "Network Configuration"
-        Parameters:
-          - "VPCTarget"
-          - "VPCCIDR"
-          - "VPCId"
-          - "VPCSubnetId"
-          - "VPCSubnetType"
-      - Label:
-          default: "Hail Configuration"
-        Parameters:
-          - "HailS3BucketName"
-          - "CreateHailBucket"
-          - "SageMakerS3BucketName"
-          - "CreateSageMakerBucket"
-          - "KMSEbsKeyArn"
-      - Label:
-          default: "Tagging Configuration"
-        Parameters:
-          - "TagEnvironmentType"
-          - "TagOwner"
-      - Label:
-          default: "AWS Quick Start Configuration"
-        Parameters:
-         - "QSS3BucketName"
-         - "QSS3KeyPrefix"
-      
-    ParameterLabels:
-      QSS3BucketName:
-        default: Quick Start S3 bucket name
-      QSS3KeyPrefix:
-        default: Quick Start S3 key prefix
-      KMSEbsKeyArn:
-        default: "EBS KMS Key ARN"
-      HailS3BucketName:
-        default: "Hail S3 Bucket Name"
-      CreateHailBucket:
-        default: "Create Hail S3 Bucket"
-      SageMakerS3BucketName:
-        default: "Sagemaker Home Directory S3 Bucket Name"
-      CreateSageMakerBucket:
-        default: "Create SageMaker Home Directory S3 Bucket"
-      TagOwner:
-        default: "Owner"
-      TagEnvironmentType:
-        default: "Environment Type"
-      VPCTarget:
-        default: "VPC Target"
-      VPCCIDR:
-        default: "New VPC CIDR"
-      VPCId:
-        default: "Existing VPC ID"
-      VPCSubnetId:
-        default: "Existing Subnet ID"
-      VPCSubnetType:
-        default: "Existing Subnet Type"
-
 Conditions:
 
     createVpc: !Equals [!Ref VPCTarget, "new"]
@@ -164,7 +165,7 @@ Resources:
   core:
     Type: "AWS::CloudFormation::Stack"
     Properties:
-      TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-core.yml"
+      TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/hail-core.template.yaml"
       Parameters:
         pHailBucket: !Ref HailS3BucketName
         pCreateHailBucket: !Ref CreateHailBucket
