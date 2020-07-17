@@ -13,6 +13,8 @@ project:
       CreateHailBucket: "yes"
       CreateSageMakerBucket: "yes"
       QSS3BucketName: $[taskcat_autobucket]
+      QSS3BucketRegion: $[taskcat_current_region]
+  s3_bucket: ''
 
 tests:
   vpcNew:
