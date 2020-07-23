@@ -3,12 +3,13 @@
 |Resource |This deployment uses
 
 // Space needed to maintain table headers
-|VPCs |<n>
-|Elastic IP addresses |<n>
-|AWS Identity and Access Management (IAM) security groups |<n>
-|IAM roles |<n>
-|Auto Scaling groups |<n>
-|Application Load Balancers |<n>
-|Network Load Balancers |<n>
-|<type> instances |<n>
+|VPCs |1*
+|Elastic IP addresses |2*
+|IAM roles |1
+|ml.t3.medium instances |1 (per Hail SageMaker notebook)**
+|r5.xlarge, m5.xlarge |1 each (per Hail Cluster)**
 |===
+
+*The VPC is optional. If you don't deploy the VPC, these resources won't be used.
+
+**These are the defaults. You can change instance types for both the notebook and cluster nodes. You can also specify more nodes in your cluster if you choose.
