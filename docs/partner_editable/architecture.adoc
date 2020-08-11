@@ -1,5 +1,5 @@
 Deploying this Quick Start for a new virtual private cloud (VPC) with
-*default parameters* builds the following {partner-product-name} environment in the
+default parameters builds the following {partner-product-name} environment in the
 AWS Cloud.
 
 [#architecture1]
