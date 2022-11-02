@@ -29,7 +29,7 @@ This document will walk through deployment steps, and highlight potential pitfal
     - [Autoscaling Task Nodes](#autoscaling-task-nodes)
   - [SageMaker Notebook Overview](#sagemaker-notebook-overview)
     - [SSM Access](#ssm-access)
-  - [Building AMIs](#public-amis)
+  - [Building AMIs](#building-amis)
     - [Hail with VEP](#hail-with-vep)
     - [Hail Only](#hail-only)
 
@@ -69,7 +69,7 @@ To deploy Hail on EMR, follow these steps:
 
     ![service-catalog-products](docs/images/deployment/service-catalog-products.png)
 
-10. Launch a Hail EMR Cluster using one of the [Public Hail AMIs](#public-amis) to get started.
+10. Launch a Hail EMR Cluster using your custom Hail AMI built from the [Building AMIs](#building-amis) section to get started. 
 
     ![service-catalog-launch](docs/images/deployment/service-catalog-launch.png)
 
@@ -99,11 +99,7 @@ Notebook service catalog deployments also require a parameter adjustment to comp
 
 Task nodes can be set to 0 to omit them.  The target market, *SPOT* or *ON_DEMAND*, is also set through parameters.  If *SPOT* is selected, the bid price is set to the current on-demand price of the selected instance type.
 
-The following scaling actions are set by default:
-
-- +2 instances when YARNMemoryAvailablePercentage < 15 % over 5 min
-- +2 instances when ContainerPendingRatio > .75 over 5 min
-- -2 instances when YARNMemoryAvailablePercentage > 80 % over 15 min
+EMR uses [managed scaling]([AWS Systems Manager Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) which lets you automatically increase or decrease the number of instances or units in your cluster based on workload. EMR managed scaling continuously evaluates cluster metrics to make scaling decisions that optimize your clusters for cost and speed. 
 
 ## SageMaker Notebook Overview
 
@@ -119,7 +115,7 @@ Example connection from Jupyter Lab shell:
 
 ![sagemaker-ssm-example](docs/images/overview/sagemaker-ssm-example.png)
 
-## Public AMIs
+## Building AMIs
 
 Public AMIs are available in specific regions. Select the AMI for your target region and deploy with the noted version of EMR for best results.
 
