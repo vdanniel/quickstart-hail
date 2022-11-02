@@ -130,7 +130,7 @@ From the AWS CodeBuild dashboard, select the desired build's radio button and cl
 
 ![codebuild_1](docs/images/ami/codebuild_start.png)
 
-On the next page you may optionally override any build parameters but are required to override the HAIL_Version value to whatever hail version you wish to use then click **Start build**.
+On the next page you may optionally override any build parameters but are required to override the `HAIL_VERSION` value to whatever hail version you wish to use then click **Start build**.
 
 ![codebuild_2](docs/images/ami/codebuild_override.png)
 
