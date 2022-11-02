@@ -22,13 +22,7 @@ function install_prereqs {
   java-1.8.0-openjdk-devel \
   lz4 \
   lz4-devel \
-  python36 \
-  python36-devel \
-  python36-setuptools
-
-  # Upgrade latest latest pip
-  python -m pip install --upgrade pip
-  python3 -m pip install --upgrade pip
+  blas
 
   WHEELS="argparse
   bokeh
@@ -52,14 +46,19 @@ function install_prereqs {
   statsmodels
   umap-learn
   utils
-  wheel"
+  wheel
+  phantomjs
+  selenium
+  boto3
+  awscli
+  ipykernel
+  pyspark
+  ipython"
 
   for WHEEL_NAME in $WHEELS
   do
     python3 -m pip install "$WHEEL_NAME"
   done
-
-  python27 -m pip install ipykernel
 }
 
 function hail_build
@@ -78,13 +77,13 @@ function hail_build
     ln -s "$JAVA_PATH" /etc/alternatives/jre/include
   fi
 
-  if [ "$HAIL_VERSION" != "master " ] && [[ "$HAIL_VERSION" < 0.2.18 ]]; then
+  if [ "$HAIL_VERSION" != "master" ] && [[ "$HAIL_VERSION" < 0.2.18 ]] && [[ "$SPARK_VERSION" < 2.4.1 ]]; then
     if [ "$SPARK_VERSION" = "2.2.0" ]; then
       ./gradlew -Dspark.version="$SPARK_VERSION" shadowJar archiveZip
     else
       ./gradlew -Dspark.version="$SPARK_VERSION" -Dbreeze.version=0.13.2 -Dpy4j.version=0.10.6 shadowJar archiveZip
     fi
-  elif [ "$HAIL_VERSION" = "master" ] || [[ "$HAIL_VERSION" > 0.2.23 ]]; then
+  elif [ "$HAIL_VERSION" = "master" ] || [[ "$HAIL_VERSION" > 0.2.23 ]] || [[ "$SPARK_VERSION" > 2.4.0 ]]; then
     make install-on-cluster HAIL_COMPILE_NATIVES=1 SPARK_VERSION="$SPARK_VERSION"
   else
     echo "Hail 0.2.19 - 0.2.23 builds are not possible due to incompatiable configurations resolved in 0.2.24."
@@ -103,7 +102,7 @@ function hail_install
   export PYTHONPATH="$HAIL_ARTIFACT_DIR/$ZIP_HAIL:\$SPARK_HOME/python:\$SPARK_HOME/python/lib/py4j-src.zip:\$PYTHONPATH"
 HAIL_PROFILE
 
-  if [[ "$HAIL_VERSION" < 0.2.24 ]]; then
+  if [[ "$HAIL_VERSION" < 0.2.24 ]] && [[ "$SPARK_VERSION" < 2.4.1 ]]; then
     cp "$PWD/build/distributions/$ZIP_HAIL" "$HAIL_ARTIFACT_DIR"
   fi
 

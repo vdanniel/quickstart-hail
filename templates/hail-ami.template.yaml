@@ -47,8 +47,9 @@ Parameters:
       - "production"
       - "staging"
       - "development"
-    Default: "development"
-    Description: "Environment type for default resource tagging."
+      - ""
+    Default: ""
+    Description: "(Optional) Environment type for default resource tagging."
     Type: "String"
 
   pTagOwner:
@@ -56,6 +57,46 @@ Parameters:
     Description: "Optional - Owner of the resources.  Person/Department, etc."
     Default: ""
 
+  pUsePermissionBoundary:
+    Type: "String"
+    Description: "Select yes to use an existing Permission Boundary."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  pPermissionBoundaryARN:
+    #FIXME Add allowed pattern back
+    #AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    Description: "Enter Permission Boundary ARN."
+    Type: "String"
+    Default: ""
+
+  pUseIamPrefix:
+    Type: "String"
+    Description: "Select yes to incorporate a required prefix in IAM Role and Policy Names."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  pIamPrefix:
+    Description: "Enter required IAM prefix."
+    Type: "String"
+    Default: ""
+
+  pUseIamSuffix:
+    Type: "String"
+    Description: "Select yes to incorporate a required suffix in IAM Role and Policy Names."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  pIamSuffix:
+    Description: "Enter required IAM suffix."
+    Type: "String"
+    Default: ""
 
 Metadata:
 
@@ -75,6 +116,15 @@ Metadata:
           - "pKmsEbsArn"
           - "pHtslibVersion"
           - "pSamtoolsVersion"
+      - Label:
+          default: "Identity and Access Management"
+        Parameters:
+          - "pUsePermissionBoundary"
+          - "pPermissionBoundaryARN"
+          - "pUseIamPrefix"
+          - "pIamPrefix"
+          - "pUseIamSuffix"
+          - "pIamSuffix"
       - Label:
           default: "Tagging"
         Parameters:
@@ -101,11 +151,26 @@ Metadata:
         default: "Owner Tag"
       pTagEnvironment:
         default: "Environment Tag"
+      pUsePermissionBoundary:
+        default: "Use Permission Boundary"
+      pPermissionBoundaryARN:
+        default: "Permission Boundary ARN"
+      pUseIamPrefix:
+        default: "Add custom prefix to all roles created"
+      pIamPrefix:
+        default: "Prefix for all roles to be created"
+      pUseIamSuffix:
+        default: "Add custom suffix to all roles created"
+      pIamSuffix:
+        default: "Suffix for all roles to be created"
 
 Conditions:
 
   CondEnableEncryption: !Not [ !Equals [ !Ref pKmsEbsArn, "" ] ]
   CondPrivateSubnet: !Equals [ !Ref pSubnetType, "private" ]
+  UsingPermissionBoundary: !Equals [!Ref pUsePermissionBoundary, "yes"]
+  UsingIamPrefix: !Equals [!Ref pUseIamPrefix, "yes"]
+  UsingIamSuffix: !Equals [!Ref pUseIamSuffix, "yes"]
 
 Resources:
 
@@ -171,8 +236,8 @@ Resources:
       Name: "hail-vep"
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
-        BuildSpec: "buildspec.yml"
-        Location: !Sub "${pHailBucket}/ami/packer.zip"
+        BuildSpec: !Sub "arn:aws:s3:::${pHailBucket}/ami/buildspec.yml"
+        Location: !Sub "${pHailBucket}/ami/packer-files.zip"
         Type: "S3"
       VpcConfig:
         !If
@@ -224,8 +289,8 @@ Resources:
       Name: "hail"
       ServiceRole: !GetAtt roleHailPacker.Arn
       Source:
-        BuildSpec: "buildspec.yml"
-        Location: !Sub "${pHailBucket}/ami/packer.zip"
+        BuildSpec: !Sub "arn:aws:s3:::${pHailBucket}/ami/buildspec.yml"
+        Location: !Sub "${pHailBucket}/ami/packer-files.zip"
         Type: "S3"
       VpcConfig:
         !If
@@ -237,112 +302,112 @@ Resources:
             VpcId: !Ref pVpcId
           - !Ref "AWS::NoValue"
       TimeoutInMinutes: 180
-
-  hailMasterVep:
-    Type: "AWS::CodeBuild::Project"
-    Properties:
-      Artifacts:
-        Type: "NO_ARTIFACTS"
-      Description: "Hail Master Branch with a specific version of VEP"
-      Environment:
-        ComputeType: "BUILD_GENERAL1_SMALL"
-        EnvironmentVariables:
-          - Name: "CORE_VAR_FILE"
-            Type: "PLAINTEXT"
-            Value: "build.vars"
-          - Name: "VEP_VERSION"
-            Type: "PLAINTEXT"
-            Value: "XX"
-          - Name: "HTSLIB_VERSION"
-            Type: "PLAINTEXT"
-            Value: !Ref pHtslibVersion
-          - Name: "SAMTOOLS_VERSION"
-            Type: "PLAINTEXT"
-            Value: !Ref pSamtoolsVersion
-          - Name: "RODA_BUCKET"
-            Type: "PLAINTEXT"
-            Value: !Ref pRodaHailBucket
-          - Name: "VPC_ID"
-            Type: "PLAINTEXT"
-            Value: !Ref pVpcId
-          - Name: "SUBNET_ID"
-            Type: "PLAINTEXT"
-            Value: !Ref pSubnetId
-          - Name: "SUBNET_TYPE"
-            Type: "PLAINTEXT"
-            Value: !Ref pSubnetType
-          - Name: "INSTANCE_PROFILE_NAME"
-            Type: "PLAINTEXT"
-            Value: !Ref roleHailPacker
-        Image: alpine
-        PrivilegedMode: true
-        Type: "LINUX_CONTAINER"
-      Name: "hail-master_vep"
-      ServiceRole: !GetAtt roleHailPacker.Arn
-      Source:
-        BuildSpec: "buildspec.yml"
-        Location: !Sub "${pHailBucket}/ami/packer.zip"
-        Type: "S3"
-      VpcConfig:
-        !If
-          - CondPrivateSubnet
-          - SecurityGroupIds:
-              - !Ref sg
-            Subnets:
-              - !Ref pSubnetId
-            VpcId: !Ref pVpcId
-          - !Ref "AWS::NoValue"
-      TimeoutInMinutes: 180
-
-  hailMasterNoVep:
-    Type: "AWS::CodeBuild::Project"
-    Properties:
-      Artifacts:
-        Type: "NO_ARTIFACTS"
-      Description: "Hail Master Branch - No VEP"
-      Environment:
-        ComputeType: "BUILD_GENERAL1_SMALL"
-        EnvironmentVariables:
-          - Name: "CORE_VAR_FILE"
-            Type: "PLAINTEXT"
-            Value: "build.vars"
-          - Name: "HTSLIB_VERSION"
-            Type: "PLAINTEXT"
-            Value: !Ref pHtslibVersion
-          - Name: "SAMTOOLS_VERSION"
-            Type: "PLAINTEXT"
-            Value: !Ref pSamtoolsVersion
-          - Name: "VPC_ID"
-            Type: "PLAINTEXT"
-            Value: !Ref pVpcId
-          - Name: "SUBNET_ID"
-            Type: "PLAINTEXT"
-            Value: !Ref pSubnetId
-          - Name: "SUBNET_TYPE"
-            Type: "PLAINTEXT"
-            Value: !Ref pSubnetType
-          - Name: "INSTANCE_PROFILE_NAME"
-            Type: "PLAINTEXT"
-            Value: !Ref roleHailPacker
-        Image: alpine
-        PrivilegedMode: true
-        Type: "LINUX_CONTAINER"
-      Name: "hail-master"
-      ServiceRole: !GetAtt roleHailPacker.Arn
-      Source:
-        BuildSpec: "buildspec.yml"
-        Location: !Sub "${pHailBucket}/ami/packer.zip"
-        Type: "S3"
-      VpcConfig:
-        !If
-          - CondPrivateSubnet
-          - SecurityGroupIds:
-              - !Ref sg
-            Subnets:
-              - !Ref pSubnetId
-            VpcId: !Ref pVpcId
-          - !Ref "AWS::NoValue"
-      TimeoutInMinutes: 180
+  # Note - hailMasterVep and hailMasterNoVep removed until solution for pulling version from master branch found.
+  # hailMasterVep:
+  #   Type: "AWS::CodeBuild::Project"
+  #   Properties:
+  #     Artifacts:
+  #       Type: "NO_ARTIFACTS"
+  #     Description: "Hail Master Branch with a specific version of VEP"
+  #     Environment:
+  #       ComputeType: "BUILD_GENERAL1_SMALL"
+  #       EnvironmentVariables:
+  #         - Name: "CORE_VAR_FILE"
+  #           Type: "PLAINTEXT"
+  #           Value: "build.vars"
+  #         - Name: "VEP_VERSION"
+  #           Type: "PLAINTEXT"
+  #           Value: "XX"
+  #         - Name: "HTSLIB_VERSION"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref pHtslibVersion
+  #         - Name: "SAMTOOLS_VERSION"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref pSamtoolsVersion
+  #         - Name: "RODA_BUCKET"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref pRodaHailBucket
+  #         - Name: "VPC_ID"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref pVpcId
+  #         - Name: "SUBNET_ID"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref pSubnetId
+  #         - Name: "SUBNET_TYPE"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref pSubnetType
+  #         - Name: "INSTANCE_PROFILE_NAME"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref roleHailPacker
+  #       Image: alpine
+  #       PrivilegedMode: true
+  #       Type: "LINUX_CONTAINER"
+  #     Name: "hail-master_vep"
+  #     ServiceRole: !GetAtt roleHailPacker.Arn
+  #     Source:
+  #       BuildSpec: !Sub "arn:aws:s3:::${pHailBucket}/ami/buildspec.yml"
+  #       Location: !Sub "${pHailBucket}/ami/packer-files.zip"
+  #       Type: "S3"
+  #     VpcConfig:
+  #       !If
+  #         - CondPrivateSubnet
+  #         - SecurityGroupIds:
+  #             - !Ref sg
+  #           Subnets:
+  #             - !Ref pSubnetId
+  #           VpcId: !Ref pVpcId
+  #         - !Ref "AWS::NoValue"
+  #     TimeoutInMinutes: 180
+  #
+  # hailMasterNoVep:
+  #   Type: "AWS::CodeBuild::Project"
+  #   Properties:
+  #     Artifacts:
+  #       Type: "NO_ARTIFACTS"
+  #     Description: "Hail Master Branch - No VEP"
+  #     Environment:
+  #       ComputeType: "BUILD_GENERAL1_SMALL"
+  #       EnvironmentVariables:
+  #         - Name: "CORE_VAR_FILE"
+  #           Type: "PLAINTEXT"
+  #           Value: "build.vars"
+  #         - Name: "HTSLIB_VERSION"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref pHtslibVersion
+  #         - Name: "SAMTOOLS_VERSION"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref pSamtoolsVersion
+  #         - Name: "VPC_ID"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref pVpcId
+  #         - Name: "SUBNET_ID"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref pSubnetId
+  #         - Name: "SUBNET_TYPE"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref pSubnetType
+  #         - Name: "INSTANCE_PROFILE_NAME"
+  #           Type: "PLAINTEXT"
+  #           Value: !Ref roleHailPacker
+  #       Image: alpine
+  #       PrivilegedMode: true
+  #       Type: "LINUX_CONTAINER"
+  #     Name: "hail-master"
+  #     ServiceRole: !GetAtt roleHailPacker.Arn
+  #     Source:
+  #       BuildSpec: !Sub "arn:aws:s3:::${pHailBucket}/ami/buildspec.yml"
+  #       Location: !Sub "${pHailBucket}/ami/packer-files.zip"
+  #       Type: "S3"
+  #     VpcConfig:
+  #       !If
+  #         - CondPrivateSubnet
+  #         - SecurityGroupIds:
+  #             - !Ref sg
+  #           Subnets:
+  #             - !Ref pSubnetId
+  #           VpcId: !Ref pVpcId
+  #         - !Ref "AWS::NoValue"
+  #     TimeoutInMinutes: 180
 
   instanceProfileHailPacker:
     Type: "AWS::IAM::InstanceProfile"
@@ -369,14 +434,26 @@ Resources:
               - "kms:ReEncrypt*"
             Effect: "Allow"
             Resource: !Ref pKmsEbsArn
-      PolicyName: "kms-ebs-access"
+      PolicyName: #kms-ebs-access
+        !Sub
+          - '${Prefix}kms-ebs-access${Suffix}'
+          - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+            Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
       Roles:
         - !Ref roleHailPacker
 
   roleHailPacker:
     Type: "AWS::IAM::Role"
     Properties:
+      PermissionsBoundary: !If [UsingPermissionBoundary, !Ref pPermissionBoundaryARN, !Ref "AWS::NoValue"]
+      RoleName: #roleHailPacker
+        !Sub
+          - '${Prefix}roleHailPacker${Suffix}'
+          - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+            Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
       Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/SecretsManagerReadWrite
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -388,7 +465,11 @@ Resources:
             Action:
               - sts:AssumeRole
       Policies:
-        - PolicyName: "CodeBuildServiceAccess"
+        - PolicyName: #CodeBuildServiceAccess
+            !Sub
+             - '${Prefix}CodeBuildServiceAccess${Suffix}'
+             - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+               Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -403,6 +484,7 @@ Resources:
                 Action:
                   - "s3:GetObject"
                   - "s3:GetObjectVersion"
+                  - "s3:ListBucket"
                 Resource:
                   - !Sub "arn:aws:s3:::${pHailBucket}/*"
                   - !Sub "arn:aws:s3:::${pRodaHailBucket}/*"
@@ -414,10 +496,14 @@ Resources:
                   - !Sub "arn:aws:s3:::${pHailBucket}"
                   - !Sub "arn:aws:s3:::${pRodaHailBucket}"
               - Effect: "Allow"
-                Action: s3:PutObject"
+                Action: s3:PutObject
                 Resource:
                   - !Sub "arn:aws:s3:::${pHailBucket}/*"
-        - PolicyName: "CodeBuildServiceEc2Vpc"
+        - PolicyName: #CodeBuildServiceEc2Vpc
+            !Sub
+             - '${Prefix}CodeBuildServiceEc2Vpc${Suffix}'
+             - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+               Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -438,7 +524,11 @@ Resources:
                 Condition:
                   StringEquals:
                     ec2:AuthorizedService: "codebuild.amazonaws.com"
-        - PolicyName: "PackerMinimumBuildAccess"
+        - PolicyName: #PackerMinimumBuildAccess
+            !Sub
+             - '${Prefix}PackerMinimumBuildAccess${Suffix}'
+             - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+               Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -477,12 +567,21 @@ Resources:
                   - "ec2:RunInstances"
                   - "ec2:StopInstances"
                   - "ec2:TerminateInstances"
+                  - "iam:GetInstanceProfile"
+                  - "iam:PassRole"
+                  - "ec2:AssociateIamInstanceProfile"
+                  - "ec2:ReplaceIamInstanceProfileAssociation"
                 Resource: "*"
 
   # self PassRole for Hail Packer role for EC2 handoff
   policyHailPackerAdditionalPacker:
     Type: "AWS::IAM::Policy"
     Properties:
+      PolicyName: #PackerPassRolePolicy
+        !Sub
+         - '${Prefix}PackerPassRolePolicy${Suffix}'
+         - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+           Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -490,7 +589,5 @@ Resources:
             Action:
               - "iam:PassRole"
             Resource: !GetAtt roleHailPacker.Arn
-      PolicyName: "AdditionalPacker"
       Roles:
         - !Ref roleHailPacker
-      

@@ -34,8 +34,9 @@ Parameters:
       - "production"
       - "staging"
       - "development"
-    Default: "development"
-    Description: "Environment type for default resource tagging."
+      - ""
+    Default: ""
+    Description: "(Optional) Environment type for default resource tagging."
     Type: "String"
 
   pTagOwner:
@@ -90,12 +91,16 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: "AES256"
+      #FIXME - REMOVE before uploading to GitHub
+      AccelerateConfiguration:
+        AccelerationStatus: Enabled
       Tags:
         - Key: "environment"
           Value: !Ref pTagEnvironment
         - Key: "owner"
           Value: !Ref pTagOwner
-    DeletionPolicy: Retain
+    #FIXME - Change to Retain before updating Github
+    #DeletionPolicy: Retain
 
   sageMakerBucketParameter:
     Type: "AWS::SSM::Parameter"
@@ -114,12 +119,17 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: "AES256"
+      #FIXME - REMOVE before uploading to GitHub
+      AccelerateConfiguration:
+        AccelerationStatus: Enabled
       Tags:
         - Key: "environment"
           Value: !Ref pTagEnvironment
         - Key: "owner"
           Value: !Ref pTagOwner
-    DeletionPolicy: Retain
+    #FIXME - Change to Retain before updating GitHub
+    #DeletionPolicy: Retain
+
 
 
   hailBucketParameter:

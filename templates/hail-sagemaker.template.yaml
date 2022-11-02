@@ -63,8 +63,9 @@ Parameters:
       - "production"
       - "staging"
       - "development"
-    Default: "development"
-    Description: "Environment type for default resource tagging."
+      - ""
+    Default: ""
+    Description: "(Optional) Environment type for default resource tagging."
     Type: "String"
 
   pTagOwner:
@@ -86,6 +87,52 @@ Parameters:
     AllowedValues:
       - "/hail/sagemaker/security-group-id"
 
+  pKmsEbsArn:
+    Description: "(Optional) The full KMS Key ARN if region level EBS encryption is enabled. Note, this does NOT automatically encrypt your AMI."
+    Default: ""
+    Type: "String"
+
+  pUsePermissionBoundary:
+    Type: "String"
+    Description: "Select yes to use an existing Permission Boundary."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  pPermissionBoundaryARN:
+    #FIXME Add allowed pattern back
+    #AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    Description: "Enter Permission Boundary ARN."
+    Type: "String"
+    Default: ""
+
+  pUseIamPrefix:
+    Type: "String"
+    Description: "Select yes to incorporate a required prefix in IAM Role and Policy Names."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  pIamPrefix:
+    Description: "Enter required IAM prefix."
+    Type: "String"
+    Default: ""
+
+  pUseIamSuffix:
+    Type: "String"
+    Description: "Select yes to incorporate a required suffix in IAM Role and Policy Names."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  pIamSuffix:
+    Description: "Enter required IAM suffix."
+    Type: "String"
+    Default: ""
+
 
 Metadata:
 
@@ -104,11 +151,21 @@ Metadata:
           - "pInstanceType"
           - "pVolumeSize"
           - "pAllowSsmShell"
+          - "pKmsEbsArn"
       - Label:
           default: "S3 Configuration"
         Parameters:
           - "pHailBucket"
           - "pSageMakerBucket"
+      - Label:
+          default: "Identity and Access Management"
+        Parameters:
+          - "pUsePermissionBoundary"
+          - "pPermissionBoundaryARN"
+          - "pUseIamPrefix"
+          - "pIamPrefix"
+          - "pUseIamSuffix"
+          - "pIamSuffix"
       - Label:
           default: "Tagging"
         Parameters:
@@ -127,6 +184,8 @@ Metadata:
         default: "Instance Type"
       pVolumeSize:
         default: "Volume Size"
+      pKmsEbsArn:
+        default: "EBS KMS Key ARN"
       pHailBucket:
         default: "SSM Parameter for Hail Bucket"
       pSageMakerBucket:
@@ -137,11 +196,27 @@ Metadata:
         default: "Owner"
       pTagEnvironment:
         default: "Environment"
+      pUsePermissionBoundary:
+        default: "Use Permission Boundary"
+      pPermissionBoundaryARN:
+        default: "Permission Boundary ARN"
+      pUseIamPrefix:
+        default: "Add custom prefix to all roles created"
+      pIamPrefix:
+        default: "Prefix for all roles to be created"
+      pUseIamSuffix:
+        default: "Add custom suffix to all roles created"
+      pIamSuffix:
+        default: "Suffix for all roles to be created"
 
 Conditions:
 
   CondAllowSsmShell: !Equals [!Ref pAllowSsmShell, "true"]
+  CondEnableEncryption: !Not [ !Equals [ !Ref pKmsEbsArn, "" ] ]
   CondSubnetTypePrivate: !Equals [!Ref pSubnetType, "private"]
+  UsingPermissionBoundary: !Equals [!Ref pUsePermissionBoundary, "yes"]
+  UsingIamPrefix: !Equals [!Ref pUseIamPrefix, "yes"]
+  UsingIamSuffix: !Equals [!Ref pUseIamSuffix, "yes"]
 
 Resources:
 
@@ -154,6 +229,7 @@ Resources:
       LifecycleConfigName: !GetAtt lifecycleConfiguration.NotebookInstanceLifecycleConfigName
       NotebookInstanceName: !Ref pName
       RootAccess: Enabled
+      KmsKeyId: !If [ CondEnableEncryption, !Ref pKmsEbsArn, !Ref "AWS::NoValue"]
       SubnetId: !Ref pSubnetId
       VolumeSizeInGB: !Ref pVolumeSize
       SecurityGroupIds:
@@ -178,10 +254,19 @@ Resources:
 
               BUCKET="${pSageMakerBucket}"
               EC2_USER_BIN="/home/ec2-user/SageMaker/bin/"
+              ENVIRONMENT="JupyterSystemEnv"
+
               sudo -u ec2-user -i <<EOF
               set -ex
               /usr/bin/aws s3 cp s3://"$BUCKET"/scripts/ "$EC2_USER_BIN" --recursive
               find "$EC2_USER_BIN" -type f -exec chmod -v 700 {} \;
+
+              source /home/ec2-user/anaconda3/bin/activate "$ENVIRONMENT"
+              pip uninstall -y jupyterlab-widgets ipywidgets
+              pip install jupyterlab-widgets==1.1.1
+              pip install ipywidgets==7.7.1
+              source /home/ec2-user/anaconda3/bin/deactivate
+
               EOF
       OnStart:
         - Content:
@@ -191,6 +276,7 @@ Resources:
 
               BUCKET="${pSageMakerBucket}"
               DIRECTORY="/home/ec2-user/SageMaker/"
+              ENVIRONMENT="JupyterSystemEnv"
 
               # Copy previously backed up user notebooks
               /usr/bin/aws s3 cp s3://$BUCKET/${pName}/ $DIRECTORY --recursive
@@ -214,15 +300,23 @@ Resources:
               jupyter labextension install @jupyter-widgets/jupyterlab-manager
               source /home/ec2-user/anaconda3/bin/deactivate
 
+              source /home/ec2-user/anaconda3/bin/activate "$ENVIRONMENT"
+              pip uninstall -y jupyterlab-widgets ipywidgets
+              pip install jupyterlab-widgets==1.1.1
+              pip install ipywidgets==7.7.1
+              source /home/ec2-user/anaconda3/bin/deactivate
+
               # Prevent iopub throttling
               sed -i.bak 's/^#c.NotebookApp.iopub_data_rate_limit.*$/c.NotebookApp.iopub_data_rate_limit = 1000000/' ~/.jupyter/jupyter_notebook_config.py
               # Session Manager for SSM connections to EMR nodes, if desired.
               sudo yum -y install https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
+
               EOF
 
   role:
     Type: "AWS::IAM::Role"
     Properties:
+      PermissionsBoundary: !If [UsingPermissionBoundary, !Ref pPermissionBoundaryARN, !Ref "AWS::NoValue"]
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -234,7 +328,11 @@ Resources:
               - "sts:AssumeRole"
       Path: "/"
       Policies:
-        - PolicyName: "s3FullUserPathControl"
+        - PolicyName: #"s3FullUserPathControl"
+            !Sub
+              - '${Prefix}s3FullUserPathControl${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -247,7 +345,11 @@ Resources:
                   - "s3:ListObject"
                   - "s3:ListBucket"
                 Resource: !Sub "arn:aws:s3:::${pSageMakerBucket}"
-        - PolicyName: "s3ListPaths"
+        - PolicyName: #"s3ListPaths"
+            !Sub
+              - '${Prefix}s3ListPaths${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -267,7 +369,11 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:s3:::${pSageMakerBucket}/scripts/*"
                   - !Sub "arn:aws:s3:::${pSageMakerBucket}/common-notebooks/*"
-        - PolicyName: "s3hailFullRead"
+        - PolicyName: #"s3hailFullRead"
+            !Sub
+              - '${Prefix}s3hailFullRead${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -278,7 +384,11 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:s3:::${pHailBucket}/*"
                   - !Sub "arn:aws:s3:::${pHailBucket}"
-        - PolicyName: "cloudwatchWrite"
+        - PolicyName: #"cloudwatchWrite"
+            !Sub
+              - '${Prefix}cloudwatchWrite${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -288,7 +398,11 @@ Resources:
                   - "logs:CreateLogGroup"
                   - "logs:PutLogEvents"
                 Resource: "*"
-        - PolicyName: "emrListClusters"
+        - PolicyName: #"emrListClusters"
+            !Sub
+              - '${Prefix}emrListClusters${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -300,7 +414,12 @@ Resources:
                   - "elasticmapreduce:DescribeCluster"
                   - "elasticmapreduce:ListInstanceGroups"
                 Resource: "*"
-      RoleName: !Sub "sagemaker-${pName}"
+      RoleName: #"sagemaker-${NotebookName}"
+        !Sub
+          - '${Prefix}sagemaker-${NotebookName}${Suffix}'
+          - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+            Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
+            NotebookName: !Ref pName
 
   policyAllowSsmShell:
     Type: "AWS::IAM::Policy"
@@ -317,7 +436,11 @@ Resources:
               StringLike:
                 "ssm:resourceTag/allow-emr-ssm":
                   - "true"
-      PolicyName: "ssm-session-by-tag"
+      PolicyName: #"ssm-session-by-tag"
+        !Sub
+          - '${Prefix}ssm-session-by-tag${Suffix}'
+          - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+            Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
       Roles:
         - !Ref role
 

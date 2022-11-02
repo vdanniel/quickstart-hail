@@ -28,6 +28,12 @@ Parameters:
     MinValue: 1 # Cannot be 0.
     Type: "Number"
 
+  pEmrMaxCoreInstanceCount:
+    Default: 1
+    Description: "Must be 1 or greater."
+    MinValue: 1 # Cannot be 0.
+    Type: "Number"
+
   pEmrCoreInstanceDataVolSize:
     Default: "100"
     Description: "GB. Secondary GP2 data volume for CORE nodes. Available on /mnt."
@@ -232,6 +238,11 @@ Parameters:
     Description: "Value of 0 disables task nodes and auto scaling."
     Type: "Number"
 
+  pEmrTaskNodeTargetCount:
+    Default: 1
+    Description: "Target number of instances for the Task instance group. Value must be at least 1."
+    Type: "Number"
+
   pEmrMaxTaskNodeCount:
     Default: 1
     Description: "Must be equal to or greater than minimum."
@@ -329,8 +340,8 @@ Parameters:
 
   pEmrReleaseLabel:
     AllowedValues:
-      - "emr-5.29.0"
-    Default: "emr-5.29.0"
+      - "emr-6.5.0"
+    Default: "emr-6.5.0"
     Description: ""
     Type: "String"
 
@@ -365,8 +376,9 @@ Parameters:
       - "production"
       - "staging"
       - "development"
-    Default: "development"
-    Description: "Environment type for default resource tagging."
+      - ""
+    Default: ""
+    Description: "(Optional) Environment type for default resource tagging."
     Type: "String"
 
   pTagOwner:
@@ -388,6 +400,47 @@ Parameters:
     AllowedValues:
       - "/hail/vpc/id"
     Type: "AWS::SSM::Parameter::Value<String>"
+
+  pUsePermissionBoundary:
+    Type: "String"
+    Description: "Select yes to use an existing Permission Boundary."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  pPermissionBoundaryARN:
+    #FIXME Add allowed pattern back
+    #AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    Description: "Enter Permission Boundary ARN."
+    Type: "String"
+    Default: ""
+
+  pUseIamPrefix:
+    Type: "String"
+    Description: "Select yes to incorporate a required prefix in IAM Role and Policy Names."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  pIamPrefix:
+    Description: "Enter required IAM prefix."
+    Type: "String"
+    Default: ""
+
+  pUseIamSuffix:
+    Type: "String"
+    Description: "Select yes to incorporate a required suffix in IAM Role and Policy Names."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  pIamSuffix:
+    Description: "Enter required IAM suffix."
+    Type: "String"
+    Default: ""
 
 Metadata:
 
@@ -418,15 +471,26 @@ Metadata:
           default: "Core Instance Configuration"
         Parameters:
           - "pEmrCoreInstanceCount"
+          - "pEmrMaxCoreInstanceCount"
           - "pEmrCoreInstanceSize"
           - "pEmrCoreInstanceDataVolSize"
       - Label:
           default: "Task Node Auto Scaling Configuration"
         Parameters:
           - "pTaskNodeMarket"
-          - "pEmrMinTaskNodeCount"
-          - "pEmrMaxTaskNodeCount"
           - "pEmrTaskNodeSize"
+          - "pEmrMinTaskNodeCount"
+          - "pEmrTaskNodeTargetCount"
+          - "pEmrMaxTaskNodeCount"
+      - Label:
+          default: "Identity and Access Management"
+        Parameters:
+          - "pUsePermissionBoundary"
+          - "pPermissionBoundaryARN"
+          - "pUseIamPrefix"
+          - "pIamPrefix"
+          - "pUseIamSuffix"
+          - "pIamSuffix"
       - Label:
           default: "Tagging"
         Parameters:
@@ -440,7 +504,9 @@ Metadata:
       pClusterName:
         default: "Cluster Name"
       pEmrCoreInstanceCount:
-        default: "Number of Core Nodes"
+        default: "Target Number of Core Nodes"
+      pEmrMaxCoreInstanceCount:
+        default: "Maximum Number of Core Nodes"
       pEmrCoreInstanceDataVolSize:
         default: "Scratch Volume Size"
       pEmrCoreInstanceSize:
@@ -453,6 +519,8 @@ Metadata:
         default: "Master Node Size"
       pEmrReleaseLabel:
         default: "EMR Release"
+      pEmrTaskNodeTargetCount:
+        default: "Target number of Task Nodes"
       pEmrMinTaskNodeCount:
         default: "Minimum number of Task Nodes"
       pEmrMaxTaskNodeCount:
@@ -475,6 +543,18 @@ Metadata:
         default: "Market"
       pVpcId:
         default: "VPC ID"
+      pUsePermissionBoundary:
+        default: "Use Permission Boundary"
+      pPermissionBoundaryARN:
+        default: "Permission Boundary ARN"
+      pUseIamPrefix:
+        default: "Add custom prefix to all roles created"
+      pIamPrefix:
+        default: "Prefix for all roles to be created"
+      pUseIamSuffix:
+        default: "Add custom suffix to all roles created"
+      pIamSuffix:
+        default: "Suffix for all roles to be created"
 
 Mappings:
 
@@ -517,6 +597,9 @@ Conditions:
   CondEnableEncryption: !Not [ !Equals [ !Ref pKmsEbsArn, "" ] ]
   CondCreateTaskNodes:  !Not [ !Equals [ !Ref pEmrMaxTaskNodeCount, "0" ] ]
   CondCustomAmi: !Not [ !Equals [ !Ref pAmi, "" ] ]
+  UsingPermissionBoundary: !Equals [!Ref pUsePermissionBoundary, "yes"]
+  UsingIamPrefix: !Equals [!Ref pUseIamPrefix, "yes"]
+  UsingIamSuffix: !Equals [!Ref pUseIamSuffix, "yes"]
 
 Resources:
 
@@ -541,6 +624,9 @@ Resources:
               - "install"
               - "-I"
               - "python-dateutil"
+        - Name: numpyReinstall
+          ScriptBootstrapAction:
+            Path: !Join [ "", ["s3://", !Ref pHailBucket, "/emr-bootstrap-scripts/numpyinstall.sh"]]
       Configurations:
         - Classification: "spark"
           ConfigurationProperties:
@@ -599,9 +685,21 @@ Resources:
                   SizeInGB: !Ref pEmrCoreInstanceDataVolSize
                   VolumeType: "gp2"
                 VolumesPerInstance: 1
+        TaskInstanceGroups:
+        - InstanceCount: !Ref pEmrTaskNodeTargetCount
+          InstanceType: !Ref pEmrTaskNodeSize
+          Market: !Ref pTaskNodeMarket
+          Name: "Task Instance Group"
         TerminationProtected: !Ref pEmrInstanceTerminationProtection
       JobFlowRole: !Ref instanceProfileEmrEc2
       LogUri: !Join ["", ["s3://", !Ref pHailBucket, "/elasticmapreduce/"]]
+      ManagedScalingPolicy:
+        ComputeLimits:
+          MaximumCapacityUnits: !Ref pEmrMaxTaskNodeCount
+          MinimumCapacityUnits: !Ref pEmrMinTaskNodeCount
+          MaximumCoreCapacityUnits: !Ref pEmrMaxCoreInstanceCount
+
+          UnitType: Instances
       Name: !Ref pClusterName
       ReleaseLabel: !Ref pEmrReleaseLabel
       ServiceRole: !Ref roleEmr
@@ -669,82 +767,6 @@ Resources:
           Value: !Ref pAllowSsmShell
       VisibleToAllUsers: true
 
-  instanceGroupTaskNodes:
-    Condition: "CondCreateTaskNodes"
-    Type: "AWS::EMR::InstanceGroupConfig"
-    Properties:
-      AutoScalingPolicy:
-        Constraints:
-          MaxCapacity: !Ref pEmrMaxTaskNodeCount
-          MinCapacity: !Ref pEmrMinTaskNodeCount
-        Rules:
-          - Action:
-              SimpleScalingPolicyConfiguration:
-                AdjustmentType: "CHANGE_IN_CAPACITY"
-                CoolDown: 300
-                ScalingAdjustment: 2
-            Description: "Add 2 instances when YARN available memory < 15%"
-            Name: "yarnMemoryUseHigh"
-            Trigger:
-              CloudWatchAlarmDefinition:
-                ComparisonOperator: "LESS_THAN"
-                Dimensions:
-                  - Key: "JobFlowId"
-                    Value: !Ref cluster
-                EvaluationPeriods: 1
-                MetricName: "YARNMemoryAvailablePercentage"
-                Namespace: "AWS/ElasticMapReduce"
-                Period: 300
-                Statistic: "AVERAGE"
-                Threshold: 15.0
-                Unit: "PERCENT"
-          - Action:
-              SimpleScalingPolicyConfiguration:
-                AdjustmentType: "CHANGE_IN_CAPACITY"
-                CoolDown: 300
-                ScalingAdjustment: 2
-            Description: "Add 2 instances when pending container ratio > .75"
-            Name: "pendingContainerHigh"
-            Trigger:
-              CloudWatchAlarmDefinition:
-                ComparisonOperator: "GREATER_THAN"
-                Dimensions:
-                  - Key: "JobFlowId"
-                    Value: !Ref cluster
-                EvaluationPeriods: 1
-                MetricName: "ContainerPendingRatio"
-                Namespace: "AWS/ElasticMapReduce"
-                Period: 300
-                Statistic: "AVERAGE"
-                Threshold: 0.75
-                Unit: "COUNT"
-          - Action:
-              SimpleScalingPolicyConfiguration:
-                AdjustmentType: "CHANGE_IN_CAPACITY"
-                CoolDown: 900
-                ScalingAdjustment: -2
-            Description: "Remove 2 instances when YARN available memory > 75%"
-            Name: "yarnMemoryUseLow"
-            Trigger:
-              CloudWatchAlarmDefinition:
-                ComparisonOperator: "GREATER_THAN"
-                Dimensions:
-                  - Key: "JobFlowId"
-                    Value: !Ref cluster
-                EvaluationPeriods: 3
-                MetricName: "YARNMemoryAvailablePercentage"
-                Namespace: "AWS/ElasticMapReduce"
-                Period: 300
-                Statistic: "AVERAGE"
-                Threshold: 80
-                Unit: "PERCENT"
-      InstanceCount: !Ref pEmrMinTaskNodeCount
-      InstanceRole: "TASK"
-      InstanceType: !Ref pEmrTaskNodeSize
-      JobFlowId: !Ref cluster
-      Market: !Ref pTaskNodeMarket
-      Name: "Task Instance Group"
-
   instanceProfileEmrEc2:
     Type: "AWS::IAM::InstanceProfile"
     Properties:
@@ -764,7 +786,11 @@ Resources:
             Action: "kms:GenerateDataKey"
             Effect: "Allow"
             Resource: !Ref pKmsEbsArn
-      PolicyName: "kms-ebs-generate-data-key"
+      PolicyName: #"kms-ebs-generate-data-key"
+        !Sub
+          - '${Prefix}kms-ebs-generate-data-key${Suffix}'
+          - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+            Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
       Roles:
         - !Ref roleEmrEc2
 
@@ -781,17 +807,24 @@ Resources:
               - "kms:Decrypt"
               - "kms:DescribeKey"
               - "kms:Encrypt"
-              - "kms:GenerateDataKeyWithoutPlaintext"
+              - "kms:GenerateDataKey*"
               - "kms:ReEncrypt*"
+              - "kms:ListGrants"
+              - "kms:RevokeGrant"
             Effect: "Allow"
             Resource: !Ref pKmsEbsArn
-      PolicyName: "kms-ebs-access"
+      PolicyName: #"kms-ebs-access"
+        !Sub
+          - '${Prefix}kms-ebs-access${Suffix}'
+          - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+            Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
       Roles:
         - !Ref roleEmr
 
   roleEmr:
     Type: "AWS::IAM::Role"
     Properties:
+      PermissionsBoundary: !If [UsingPermissionBoundary, !Ref pPermissionBoundaryARN, !Ref "AWS::NoValue"]
       AssumeRolePolicyDocument:
         Version: "2008-10-17"
         Statement:
@@ -803,11 +836,29 @@ Resources:
       Path: "/"
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceRole"
-      RoleName: !Join ["-", ["emr-cluster", !Ref pClusterName]]
+      Policies:
+        - PolicyName: #"s3AccessBootstrapScripts"
+            !Sub
+              - '${Prefix}s3AccessBootstrapScripts${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "s3:*"
+                Resource: !Join [ "", ["arn:aws:s3:::", !Ref pHailBucket, "/emr-bootstrap-scripts/bootstrap-actions/*"]]
+      RoleName: #"emr-cluster-{UniqueId}"
+        !Sub
+          - '${Prefix}emr-cluster-${UniqueId}${Suffix}'
+          - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+            Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
+            UniqueId: !Select [4, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]
 
   roleEmrEc2:
     Type: "AWS::IAM::Role"
     Properties:
+      PermissionsBoundary: !If [UsingPermissionBoundary, !Ref pPermissionBoundaryARN, !Ref "AWS::NoValue"]
       AssumeRolePolicyDocument:
         Version: "2008-10-17"
         Statement:
@@ -821,25 +872,51 @@ Resources:
         - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
       Path: "/"
       Policies:
-        - PolicyName: "s3ManifestPutObject"
+        - PolicyName: #"s3ManifestPutObject"
+            !Sub
+              - '${Prefix}s3ManifestPutObject${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: "Allow"
                 Action: "s3:PutObject"
                 Resource: !Join [ "", ["arn:aws:s3:::", !Ref pHailBucket, ":/manifests/*"]]
-        - PolicyName: "cloudformationDescribeStack"
+        - PolicyName: #"s3AccessBootstrapScripts"
+            !Sub
+              - '${Prefix}s3AccessBootstrapScripts${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "s3:*"
+                Resource: !Join [ "", ["arn:aws:s3:::", !Ref pHailBucket, "/emr-bootstrap-scripts/*"]]
+        - PolicyName: #"cloudformationDescribeStack"
+            !Sub
+              - '${Prefix}cloudformationDescribeStack${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: "Allow"
                 Action: "cloudformation:DescribeStacks"
                 Resource: !Ref "AWS::StackId"
-      RoleName: !Join ["-",["emr-ec2", !Ref pClusterName]]
+      RoleName: #"emr-ec2-{UniqueId}"
+        !Sub
+          - '${Prefix}emr-ec2-${UniqueId}${Suffix}'
+          - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+            Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
+            UniqueId: !Select [4, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]
+
 
   roleEmrAutoScaling:
     Type: "AWS::IAM::Role"
     Properties:
+      PermissionsBoundary: !If [UsingPermissionBoundary, !Ref pPermissionBoundaryARN, !Ref "AWS::NoValue"]
       AssumeRolePolicyDocument:
         Version: "2008-10-17"
         Statement:
@@ -853,7 +930,12 @@ Resources:
       Path: "/"
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforAutoScalingRole"
-      RoleName: !Join ["-", ["emr-autoscaling", !Ref pClusterName]]
+      RoleName: #"emr-autoscaling-{UniqueId}"
+        !Sub
+          - '${Prefix}emr-autoscaling-${UniqueId}${Suffix}'
+          - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+            Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
+            UniqueId: !Select [4, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]
 
   # Add full ingress from master.  Separate from in group rules to prevent cyclical dependencies.
   sgIngressEmrMaster:

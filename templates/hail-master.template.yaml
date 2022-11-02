@@ -17,10 +17,10 @@ Metadata:
       - Label:
           default: "Hail Configuration"
         Parameters:
-          - "HailS3BucketName"
           - "CreateHailBucket"
-          - "SageMakerS3BucketName"
+          - "HailS3BucketName"
           - "CreateSageMakerBucket"
+          - "SageMakerS3BucketName"
           - "KMSEbsKeyArn"
       - Label:
           default: "Tagging Configuration"
@@ -28,12 +28,21 @@ Metadata:
           - "TagEnvironmentType"
           - "TagOwner"
       - Label:
+          default: "Identity and Access Management"
+        Parameters:
+          - "UsePermissionBoundary"
+          - "PermissionBoundaryARN"
+          - "UseIamPrefix"
+          - "IamPrefix"
+          - "UseIamSuffix"
+          - "IamSuffix"
+      - Label:
           default: "AWS Quick Start Configuration"
         Parameters:
          - "QSS3BucketName"
          - "QSS3KeyPrefix"
          - "QSS3BucketRegion"
-      
+
     ParameterLabels:
       QSS3BucketName:
         default: Quick Start S3 bucket name
@@ -42,7 +51,7 @@ Metadata:
       QSS3BucketRegion:
         default: Region of Quickstart bucket
       KMSEbsKeyArn:
-        default: "EBS KMS Key ARN"
+        default: "EBS KMS Key ARN (Optional)"
       HailS3BucketName:
         default: "Hail S3 bucket name"
       CreateHailBucket:
@@ -56,16 +65,28 @@ Metadata:
       TagEnvironmentType:
         default: "Environment type"
       VPCTarget:
-        default: "VPC target"
+        default: "Virtual Private Cloud (VPC) target"
       VPCCIDR:
-        default: "New VPC CIDR"
+        default: "New VPC CIDR (Optional)"
       VPCId:
         default: "Existing VPC ID"
       VPCSubnetId:
-        default: "Existing subnet ID"
+        default: "Existing Subnet ID"
       VPCSubnetType:
-        default: "Existing subnet type"
-        
+        default: "Existing Subnet type"
+      UsePermissionBoundary:
+        default: "Use Permission Boundary"
+      PermissionBoundaryARN:
+        default: "Permission Boundary ARN"
+      UseIamPrefix:
+        default: "Use prefix for roles and policies"
+      IamPrefix:
+        default: "Prefix to use for roles and policies"
+      UseIamSuffix:
+        default: "Use prefix for roles and policies"
+      IamSuffix:
+        default: "Prefix to use for roles and policies"
+
 Parameters:
 
   QSS3BucketName:
@@ -86,7 +107,7 @@ Parameters:
     Default: 'us-east-1'
     Description: 'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted.'
     Type: String
-  
+
   KMSEbsKeyArn:
     Description: "(Optional) The full KMS Key ARN if Region level EBS encryption is enabled. This does not automatically encrypt your AMI."
     Default: ""
@@ -123,8 +144,9 @@ Parameters:
       - "production"
       - "staging"
       - "development"
-    Default: "development"
-    Description: "Environment type for default resource tagging."
+      - ""
+    Default: ""
+    Description: "(Optional) Environment type for default resource tagging."
     Type: "String"
 
   TagOwner:
@@ -143,26 +165,67 @@ Parameters:
   VPCCIDR:
     Type: "String"
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
-    Description: "Required for a new VPC. A /16 address space is recommended for a new VPC."
+    Description: "Leave this blank if using an existing Virtual Private Cloud (VPC).  Otherwise, this is required for a new VPC. A /16 address space is recommended for a new VPC."
     Default: "10.0.0.0/16"
 
   VPCId:
-    Description: "Required for existing VPC target."
-    Type: "String"
+    Description: "Required for existing VPC target.  Leave blank if using a 'New' VPC Target."
+    Type: "AWS::EC2::VPC::Id"
     Default: ""
 
   VPCSubnetId:
-    Description: "Required for an existing VPC target. Subnet ID in the existing VPC in which EMR Cluster and SageMaker Notebook Instances will be launched. A private subnet is recommended."
-    Type: "String"
+    Description: "Required for an existing VPC target. Subnet ID in the existing VPC in which EMR Cluster and SageMaker Notebook Instances will be launched. A private subnet is recommended.  Leave blank if using a 'New' VPC Target."
+    Type: "AWS::EC2::Subnet::Id"
     Default: ""
 
   VPCSubnetType:
-    Description: "Required for an existing VPC target. Should match the type of subnet specified by Subnet Id. Type of subnet compute resources will be deployed in and also used to create custom AMIs. A private subnet is recommended."
+    Description: "Required for an existing VPC target. Should match the type of subnet specified by Subnet Id. Type of subnet compute resources will be deployed in and also used to create custom AMIs. A private subnet is recommended. Leave blank if using a 'New' VPC Target."
     Type: "String"
     AllowedValues:
       - "public"
       - "private"
     Default: "private"
+
+  UsePermissionBoundary:
+    Type: "String"
+    Description: "Select yes to use an existing Permission Boundary."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  PermissionBoundaryARN:
+    #FIXME Add allowed pattern back
+    #AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    Description: "Enter Permission Boundary ARN."
+    Type: "String"
+    Default: ""
+
+  UseIamPrefix:
+    Type: "String"
+    Description: "Select yes to incorporate a required prefix in IAM Role and Policy Names."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  IamPrefix:
+    Description: "Enter required IAM prefix."
+    Type: "String"
+    Default: ""
+
+  UseIamSuffix:
+    Type: "String"
+    Description: "Select yes to incorporate a required suffix in IAM Role and Policy Names."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  IamSuffix:
+    Description: "Enter required IAM suffix."
+    Type: "String"
+    Default: ""
 
 Conditions:
 
@@ -192,6 +255,12 @@ Resources:
         pTagEnvironment: !Ref TagEnvironmentType
         pTagOwner: !Ref TagOwner
         pVpcId: !If [createVpc, !GetAtt 'vpc.Outputs.VPCID', !Ref VPCId]
+        pUsePermissionBoundary: !Ref UsePermissionBoundary
+        pPermissionBoundaryARN: !Ref PermissionBoundaryARN
+        pUseIamPrefix: !Ref UseIamPrefix
+        pIamPrefix: !Ref IamPrefix
+        pUseIamSuffix: !Ref UseIamSuffix
+        pIamSuffix: !Ref IamSuffix
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         QSS3BucketRegion: !Ref QSS3BucketRegion

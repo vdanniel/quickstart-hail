@@ -27,6 +27,15 @@ Metadata:
           - "pCreateSageMakerBucket"
           - "pKmsEbsArn"
       - Label:
+          default: "Identity and Access Management"
+        Parameters:
+          - "pUsePermissionBoundary"
+          - "pPermissionBoundaryARN"
+          - "pUseIamPrefix"
+          - "pIamPrefix"
+          - "pUseIamSuffix"
+          - "pIamSuffix"
+      - Label:
           default: "Tagging"
         Parameters:
           - "pTagEnvironment"
@@ -58,6 +67,19 @@ Metadata:
         default: "Existing Subnet ID"
       pSubnetType:
         default: "Existing Subnet Type"
+      pUsePermissionBoundary:
+        default: "Use Permission Boundary"
+      pPermissionBoundaryARN:
+        default: "Permission Boundary ARN"
+      pUseIamPrefix:
+        default: "Add custom prefix to all roles created"
+      pIamPrefix:
+        default: "Prefix for all roles to be created"
+      pUseIamSuffix:
+        default: "Add custom suffix to all roles created"
+      pIamSuffix:
+        default: "Suffix for all roles to be created"
+
 
 Parameters:
 
@@ -79,7 +101,7 @@ Parameters:
     Default: 'us-east-1'
     Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.
     Type: String
-  
+
   pHailBucket:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
     Description: "EMR logs, cluster manifests, and VEP configuration files are placed here."
@@ -116,8 +138,9 @@ Parameters:
       - "production"
       - "staging"
       - "development"
-    Default: "development"
-    Description: "Environment type for default resource tagging."
+      - ""
+    Default: ""
+    Description: "(Optional) Environment type for default resource tagging."
     Type: "String"
 
   pTagOwner:
@@ -141,11 +164,53 @@ Parameters:
     Description: "Required - SageMaker security group is created in this VPC."
     Type: "AWS::EC2::VPC::Id"
 
+  pUsePermissionBoundary:
+    Type: "String"
+    Description: "Select yes to use an existing Permission Boundary."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  pPermissionBoundaryARN:
+    #FIXME Add allowed pattern back
+    #AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    Description: "Enter Permission Boundary ARN."
+    Type: "String"
+    Default: ""
+
+  pUseIamPrefix:
+    Type: "String"
+    Description: "Select yes to incorporate a required prefix in IAM Role and Policy Names."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  pIamPrefix:
+    Description: "Enter required IAM prefix."
+    Type: "String"
+    Default: ""
+
+  pUseIamSuffix:
+    Type: "String"
+    Description: "Select yes to incorporate a required suffix in IAM Role and Policy Names."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "no"
+
+  pIamSuffix:
+    Description: "Enter required IAM suffix."
+    Type: "String"
+    Default: ""
+
 Conditions:
 
-    UsingDefaultBucket: !Equals
-    - !Ref QSS3BucketName
-    - 'aws-quickstart'
+    UsingDefaultBucket: !Equals [!Ref QSS3BucketName, "aws-quickstart"]
+    UsingPermissionBoundary: !Equals [!Ref pUsePermissionBoundary, "yes"]
+    UsingIamPrefix: !Equals [!Ref pUseIamPrefix, "yes"]
+    UsingIamSuffix: !Equals [!Ref pUseIamSuffix, "yes"]
 
 Resources:
 
@@ -183,6 +248,12 @@ Resources:
         pSubnetId: !Ref pSubnetId
         pSubnetType: !Ref pSubnetType
         pVpcId: !Ref pVpcId
+        pUsePermissionBoundary: !Ref pUsePermissionBoundary
+        pPermissionBoundaryARN: !Ref pPermissionBoundaryARN
+        pUseIamPrefix: !Ref pUseIamPrefix
+        pIamPrefix: !Ref pIamPrefix
+        pUseIamSuffix: !Ref pUseIamSuffix
+        pIamSuffix: !Ref pIamSuffix
       TimeoutInMinutes: 5
 
   stackServiceCatalog:
@@ -248,9 +319,33 @@ Resources:
       Type: "String"
       Value: !Ref pSubnetType
 
+  usePermissionBoundaryParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Description: "Permission Boundary to be used for Hail Roles and Policies."
+      Name: "/hail/iam/use-permission-boundary"
+      Type: "String"
+      Value: !Ref pUsePermissionBoundary
+
+  permissionBoundaryParameter:
+    Type: "AWS::SSM::Parameter"
+    Condition: UsingPermissionBoundary
+    Properties:
+      Description: "Permission Boundary to be used for Hail Roles and Policies."
+      Name: "/hail/iam/permission-boundary"
+      Type: "String"
+      Value: !Ref pPermissionBoundaryARN
+
+
   roleLambdaS3seed:
     Type: "AWS::IAM::Role"
     Properties:
+      PermissionsBoundary: !If [UsingPermissionBoundary, !Ref pPermissionBoundaryARN, !Ref "AWS::NoValue"]
+      RoleName:
+        !Sub
+          - '${Prefix}roleLambdaS3seed${Suffix}'
+          - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+            Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -262,7 +357,11 @@ Resources:
               - "sts:AssumeRole"
       Path: "/"
       Policies:
-        - PolicyName: "cloudwatch-log-write"
+        - PolicyName: #"cloudwatch-log-write"
+            !Sub
+              - '${Prefix}cloudwatch-log-write${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -272,7 +371,11 @@ Resources:
                 - "logs:PutLogEvents"
               Resource: "arn:aws:logs:*:*:*"
               Effect: "Allow"
-        - PolicyName: "hail-sagemaker-s3-put-object"
+        - PolicyName: #"hail-sagemaker-s3-put-object"
+            !Sub
+              - '${Prefix}hail-sagemaker-s3-put-object${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -283,7 +386,11 @@ Resources:
                 - !Sub "arn:aws:s3:::${pSageMakerBucket}/scripts/*"
                 - !Sub "arn:aws:s3:::${pHailBucket}/*"
               Effect: "Allow"
-        - PolicyName: "s3-quickstart-list"
+        - PolicyName: #"s3-quickstart-list"
+            !Sub
+              - '${Prefix}s3-quickstart-list${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -292,7 +399,11 @@ Resources:
               Resource:
                 - !Sub "arn:aws:s3:::${QSS3BucketName}"
               Effect: "Allow"
-        - PolicyName: "s3-quickstart-get-object"
+        - PolicyName: #"s3-quickstart-get-object"
+            !Sub
+              - '${Prefix}s3-quickstart-get-object${Suffix}'
+              - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+                Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -315,7 +426,7 @@ Resources:
           import shutil
 
           client = boto3.client("s3")
-          s3_packer_dest = "ami/packer.zip"
+          s3_packer_dest = "ami/packer-files.zip"
 
 
           def s3_sync_buckets(source_bucket, dest_bucket, source_prefix, directory):
@@ -372,7 +483,7 @@ Resources:
                       },
                       {
                           "source_path": quickstart_prefix,
-                          "sub_directories": ["vep-configuration"],
+                          "sub_directories": ["vep-configuration", "emr-bootstrap-scripts", "ami"],
                           "dest_bucket": hail_bucket,
                       },
                   ]
@@ -386,11 +497,11 @@ Resources:
                               )
 
                       # Copy quickstart packer directory to local file system.
-                      packer_dir = f"/tmp/{quickstart_prefix}packer"
-                      s3_sync_local(source_bucket, quickstart_prefix + "packer/", "/tmp")
+                      packer_dir = f"/tmp/{quickstart_prefix}packer-files"
+                      s3_sync_local(source_bucket, quickstart_prefix + "packer-files/", "/tmp")
 
                       # Zip and seed user's Hail bucket for custom AMI builds.
-                      zip_name = shutil.make_archive("/tmp/packer", "zip", packer_dir)
+                      zip_name = shutil.make_archive("/tmp/packer-files", "zip", packer_dir)
                       f = open(zip_name, "rb")
                       zip_contents = f.read()
                       f.close()
@@ -453,4 +564,3 @@ Outputs:
   bucketSageMaker:
     Description: "SageMaker S3 Bucket"
     Value: !GetAtt stackS3.Outputs.bucketSageMaker
-
