@@ -4,13 +4,7 @@ This ReadMe contains expanded documentation surrounding the AMI custom build pro
 
 Hail on EMR requires the use of a custom AMI with Hail, Spark, VEP, and reference genomes preconfigured.  This build process is driven by Packer, and leverages AWS CodeBuild.  Note that some of these software packages are optional, and the build process can be executed for different versions or combinations of these software packages.
 
-AWS CodeBuild Projects are deployed via a CloudFormation template will that can be used to build specific combinations of [Hail](https://hail.is), [Spark](https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-spark.html), and [VEP](https://useast.ensembl.org/info/docs/tools/vep/index.html).  The local `packer` folder is zipped and pushed to an S3 bucket to be used as the build source.
-
-The Hail master branch HEAD can be used as a build source by **omitting** the `HAIL_VERSION` variable from your CodeBuild Project in CloudFormation.
-
-[VEP](https://useast.ensembl.org/info/docs/tools/vep/index.html) installation can also be excluded by **omitting** the `VEP_VERSION` environment variable.
-
-[Public AMIs](/readme.md#public-amis) are published and referenced in the root of this repo.  These AMIs are built using this workflow.  If you wish to create you own custom AMIs, follow the process documented here.
+AWS CodeBuild Projects are deployed via a CloudFormation template will that can be used to build specific combinations of [Hail](https://hail.is), [Spark](https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-spark.html), and [VEP](https://useast.ensembl.org/info/docs/tools/vep/index.html).  The local `packer-files` folder is zipped and pushed to an S3 bucket to be used as the build source.
 
 _Note:  Creating these custom AMIs is a complicated process and requires working knowledge of AWS CodeBuild, Packer from Hashicorp, and shell scripting.  Troubleshooting will require intimate knowledge of Hail, VEP, and their associated build processes (including knowledge of perl).  Proceed with caution._
 
@@ -93,13 +87,15 @@ Before building, keep the following in mind:
 
 From the AWS CodeBuild dashboard, select the desired build's radio button and click **Start build**.
 
-![codebuild_1](docs/images/codebuild_start.png)
+![codebuild_1](images/ami/codebuild_start.png)
 
 On the next page you may optionally override any build parameters then click **Start build**.
 
+![codebuild_2](images/ami/codebuild_envrionment_override_vep.png)
+
 Once the build beings you can optionally tail logs to view progress.  Closing this window will not terminate the build.
 
-![codebuild_2](docs/images/codebuild_running.png)
+![codebuild_3](images/ami/codebuild_running.png)
 
 ## Execute a CLI Build
 
@@ -145,12 +141,12 @@ Builds are executed via the [build wrapper](build-wrapper.sh).  This wrapper has
 
 ### A Note on Packer
 
-Each time a file changes under the `packer` directory you must zip and push directory up to S3.  CodeBuild will pull this zip file in for each build.
+Each time a file changes under the `packer-files` directory you must zip and push directory up to S3.  CodeBuild will pull this zip file in for each build.
 
-From the `hail/packer` directory, zip the contents and move it to an S3 bucket/key that matches the parameters set in your CloudFormation.
+From the `hail/packer-files` directory, zip the contents and move it to an S3 bucket/key that matches the parameters set in your CloudFormation.
 
 ```bash
-14:31 $ zip packer.zip -r ./
+14:31 $ zip packer-files.zip -r ./
   adding: codebuild/ (stored 0%)
   adding: codebuild/buildspec.yml (deflated 38%)
   adding: build-wrapper.sh (deflated 61%)
@@ -172,8 +168,8 @@ From the `hail/packer` directory, zip the contents and move it to an S3 bucket/k
   adding: scripts/vep_install.sh (deflated 65%)
   adding: scripts/R_install.R (deflated 32%)
   adding: amazon-linux.json (deflated 69%)
-14:35 $ aws s3 mv packer.zip s3://YOUR-BUCKET/ami/packer.zip
-move: ./packer.zip to s3://YOUR-BUCKET/ami/packer.zip
+14:35 $ aws s3 mv packer-files.zip s3://YOUR-BUCKET/ami/packer-files.zip
+move: ./packer-files.zip to s3://YOUR-BUCKET/ami/packer-files.zip
 ```
 
 ## Troubleshooting
