@@ -119,7 +119,7 @@ Example connection from Jupyter Lab shell:
 
 Hail on EMR requires the use of a custom AMI with Hail, Spark, VEP, and reference genomes preconfigured.  This build process is driven by Packer, and leverages AWS CodeBuild.  Note that some of these software packages are optional, and the build process can be executed for different versions or combinations of these software packages.
 
-## Execute a GUI Build in CodeBuild
+### Execute a GUI Build in CodeBuild
 
 Before building, keep the following in mind:
 
@@ -136,12 +136,12 @@ Once the build beings you can optionally tail logs to view progress.  Closing th
 
 ![codebuild_2](docs/images/codebuild_running.png)
 
-## Troubleshooting
+### Troubleshooting
 
-### AMI Exists
+#### AMI Exists
 
 AMI names are unique.  In order to rebuild an AMI with the same name you will need to deregister the AMI your AWS account and target region.
 
-### Additional Documentation
+#### Additional Documentation
 
-Additional documentation on the building a custom Hail AMI can be found in the [AMI Creation Guide](/ami-creation.md# Building a Custom Hail AMI).
+Additional documentation on the building a custom Hail AMI can be found in the [AMI Creation Guide](/docs/ami-creation.md# Building a Custom Hail AMI).
