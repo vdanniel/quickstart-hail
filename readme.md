@@ -128,15 +128,15 @@ Before building, keep the following in mind:
 
 From the AWS CodeBuild dashboard, select the desired build's radio button and click **Start with overrides**.
 
-![codebuild_1](docs/images/codebuild_start.png)
+![codebuild_1](docs/images/ami/codebuild_start.png)
 
 On the next page you may optionally override any build parameters but are required to override the HAIL_Version value to whatever hail version you wish to use then click **Start build**.
 
-![codebuild_2](docs/images/codebuild_override.png)
+![codebuild_2](docs/images/ami/codebuild_override.png)
 
 Once the build begins you can optionally tail logs to the view progress.  Closing this window will not terminate the build.
 
-![codebuild_3](docs/images/codebuild_running.png)
+![codebuild_3](docs/images/ami/codebuild_running.png)
 
 ### Troubleshooting
 
