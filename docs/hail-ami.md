@@ -65,16 +65,16 @@ Before building, keep the following in mind:
 - Builds can take upwards of 90 minutes.
 - AMI names are unique.  If building an updated AMI, deregister the previous.
 
-From the AWS CodeBuild dashboard, select **Build projects** then the desired build's radio button and click **Start build**.
+From the AWS CodeBuild dashboard, select **Build projects** then the desired build's radio button and click **Start with overrides**.
 
-![codebuild_1](docs/images/ami/codebuild_start.png)
+![codebuild_1](images/ami/codebuild_start.png)
 
-On the next page open the **Environment vairable override** section and enter values specific to your build.
+On the next page open the **Environment variable override** section and enter values specific to your build.
 
-The `VEP_VERSION` identifies what version of VEP the build will pull from the `RODA_BUCKET`.  Values in red should be updated on each build based on files you've updated or included in your `packer.zip` upload. Values in green should not require adjustment unless you've explictly customized the CloudFormation templates.
+If using the **hail-vep** build, the `VEP_VERSION` identifies what version of VEP the build will pull from the `RODA_BUCKET`.  Replace all `XX` values with the values you wish to build with.  For example, replace `HAIL_VERSION` with 0.2.100 or the latest version released.
 
-![codebuild_2](docs/images/ami/codebuild_override.png)
+![codebuild_2](images/ami/codebuild_envrionment_override_vep.png)
 
 Once the build beings you can optionally tail logs to view progress.  Closing this window will not terminate the build.
 
-![codebuild_3](docs/images/ami/codebuild_running.png)
+![codebuild_3](images/ami/codebuild_running.png)
