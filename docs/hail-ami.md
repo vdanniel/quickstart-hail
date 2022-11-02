@@ -73,7 +73,7 @@ On the next page open the **Environment vairable override** section and enter va
 
 The `VEP_VERSION` identifies what version of VEP the build will pull from the `RODA_BUCKET`.  Values in red should be updated on each build based on files you've updated or included in your `packer.zip` upload. Values in green should not require adjustment unless you've explictly customized the CloudFormation templates.
 
-![codebuild_2](docs/images/ami/codebuild_environment_override.png)
+![codebuild_2](docs/images/ami/codebuild_override.png)
 
 Once the build beings you can optionally tail logs to view progress.  Closing this window will not terminate the build.
 
