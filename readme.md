@@ -45,7 +45,7 @@ To deploy Hail on EMR, follow these steps:
 
 2. Create a new stack using the following S3 URL as a template source - [https://aws-quickstart.s3.amazonaws.com/quickstart-hail/templates/hail-master.template.yaml](https://aws-quickstart.s3.amazonaws.com/quickstart-hail/templates/hail-master.template.yaml)
 
-3. Set parameters based on your environment and choose *Next*.
+3. Set parameters based on your environment requirements. This template includes an **optional** Identity and Access Management section where you can set any permission boundary your organization requires as well custom prefix/suffixes to be used for all IAM roles and policies created by the templates.  Once all parameters are set, choose *Next*.
 
 4. Optionally configure stack options and choose *Next*.
 
