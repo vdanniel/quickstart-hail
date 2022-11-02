@@ -5,7 +5,8 @@ Description: "EMR with Hail and VEP (qs-1qp776mgo)"
 Parameters:
 
   pAmi:
-    Description: "(Optional) Custom AMI, specific version from the public AMI list, or empty value.  If empty, the latest public Hail with VEP AMI will be used."
+    #Note: Can make this optional in a custom version of this template if you build out AMIs in each region and update mapping section further below.
+    Description: "(Required) Custom Hail AMI."
     Type: "String"
 
   pAllowSsmShell:
@@ -238,11 +239,6 @@ Parameters:
     Description: "Value of 0 disables task nodes and auto scaling."
     Type: "Number"
 
-  pEmrTaskNodeTargetCount:
-    Default: 1
-    Description: "Target number of instances for the Task instance group. Value must be at least 1."
-    Type: "Number"
-
   pEmrMaxTaskNodeCount:
     Default: 1
     Description: "Must be equal to or greater than minimum."
@@ -410,8 +406,7 @@ Parameters:
     Default: "no"
 
   pPermissionBoundaryARN:
-    #FIXME Add allowed pattern back
-    #AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
     Description: "Enter Permission Boundary ARN."
     Type: "String"
     Default: ""
@@ -480,7 +475,6 @@ Metadata:
           - "pTaskNodeMarket"
           - "pEmrTaskNodeSize"
           - "pEmrMinTaskNodeCount"
-          - "pEmrTaskNodeTargetCount"
           - "pEmrMaxTaskNodeCount"
       - Label:
           default: "Identity and Access Management"
@@ -519,8 +513,6 @@ Metadata:
         default: "Master Node Size"
       pEmrReleaseLabel:
         default: "EMR Release"
-      pEmrTaskNodeTargetCount:
-        default: "Target number of Task Nodes"
       pEmrMinTaskNodeCount:
         default: "Minimum number of Task Nodes"
       pEmrMaxTaskNodeCount:
@@ -556,47 +548,49 @@ Metadata:
       pIamSuffix:
         default: "Suffix for all roles to be created"
 
-Mappings:
-
-  Region:
-    eu-north-1:
-      ami: 'ami-0097c8916181505c5'
-    ap-south-1:
-      ami: 'ami-0cc18a6e8cf105185'
-    eu-west-3:
-      ami: 'ami-09f35326ba84d2ee0'
-    eu-west-2:
-      ami: 'ami-04bbc6780b6719abe'
-    eu-west-1:
-      ami: 'ami-05adfeb1ffea4f488'
-    ap-northeast-2:
-      ami: 'ami-0fac2662a22702e92'
-    ap-northeast-1:
-      ami: 'ami-0a2a15ed71805f23d'
-    sa-east-1:
-      ami: 'ami-0ea74a00f1109fe14'
-    ca-central-1:
-      ami: 'ami-052c9e8e247ad39b1'
-    ap-southeast-1:
-      ami: 'ami-07124736552a4152b'
-    ap-southeast-2:
-      ami: 'ami-0fa25f9d65099152c'
-    eu-central-1:
-      ami: 'ami-0a9294d79a555d742'
-    us-east-1:
-      ami: 'ami-0f33e21674eed03c6'
-    us-east-2:
-      ami: 'ami-03cc99a0a57b9a8f4'
-    us-west-1:
-      ami: 'ami-0ed287d132c16a457'
-    us-west-2:
-      ami: 'ami-083d074beb4c62cfc'
+#FIXME You can remove commented Mappings after creating custom AMI in each region for use in greater environment.  Linked to CondCustomAmi logic.
+# Mappings:
+#
+#   Region:
+#     eu-north-1:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     ap-south-1:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     eu-west-3:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     eu-west-2:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     eu-west-1:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     ap-northeast-2:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     ap-northeast-1:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     sa-east-1:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     ca-central-1:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     ap-southeast-1:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     ap-southeast-2:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     eu-central-1:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     us-east-1:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     us-east-2:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     us-west-1:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
+#     us-west-2:
+#       ami: 'ami-xxxxxxxxxxxxxxxxx'
 
 Conditions:
 
   CondEnableEncryption: !Not [ !Equals [ !Ref pKmsEbsArn, "" ] ]
   CondCreateTaskNodes:  !Not [ !Equals [ !Ref pEmrMaxTaskNodeCount, "0" ] ]
-  CondCustomAmi: !Not [ !Equals [ !Ref pAmi, "" ] ]
+  #FIXME Remove comments once custom AMIs are built in each applicable region and mappings are updated. 
+  #CondCustomAmi: !Not [ !Equals [ !Ref pAmi, "" ] ]
   UsingPermissionBoundary: !Equals [!Ref pUsePermissionBoundary, "yes"]
   UsingIamPrefix: !Equals [!Ref pUseIamPrefix, "yes"]
   UsingIamSuffix: !Equals [!Ref pUseIamSuffix, "yes"]
@@ -658,10 +652,11 @@ Resources:
         - Classification: "emrfs-site"
           ConfigurationProperties:
             fs.s3.maxConnections: "1000"
-      CustomAmiId: !If
-        - CondCustomAmi
-        - !Ref pAmi
-        - !FindInMap [ Region, !Ref "AWS::Region", ami ]
+      #FIXME You can remove comments after building custom AMI in each region to map to this logic.
+      # CustomAmiId: !If
+      #   - CondCustomAmi
+      #   - !Ref pAmi
+      #   - !FindInMap [ Region, !Ref "AWS::Region", ami ]
       EbsRootVolumeSize: !Ref pEmrInstanceRootVolSize
       Instances:
         AdditionalMasterSecurityGroups:
@@ -686,7 +681,7 @@ Resources:
                   VolumeType: "gp2"
                 VolumesPerInstance: 1
         TaskInstanceGroups:
-        - InstanceCount: !Ref pEmrTaskNodeTargetCount
+        - InstanceCount: !Ref pEmrMinTaskNodeCount
           InstanceType: !Ref pEmrTaskNodeSize
           Market: !Ref pTaskNodeMarket
           Name: "Task Instance Group"

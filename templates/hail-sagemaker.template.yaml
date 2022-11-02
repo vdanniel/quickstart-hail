@@ -101,8 +101,7 @@ Parameters:
     Default: "no"
 
   pPermissionBoundaryARN:
-    #FIXME Add allowed pattern back
-    #AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
     Description: "Enter Permission Boundary ARN."
     Type: "String"
     Default: ""

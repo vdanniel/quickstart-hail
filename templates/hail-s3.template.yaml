@@ -119,7 +119,6 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: "AES256"
-      #FIXME - REMOVE before uploading to GitHub
       AccelerateConfiguration:
         AccelerationStatus: Enabled
       Tags:
@@ -127,8 +126,7 @@ Resources:
           Value: !Ref pTagEnvironment
         - Key: "owner"
           Value: !Ref pTagOwner
-    #FIXME - Change to Retain before updating GitHub
-    #DeletionPolicy: Retain
+    DeletionPolicy: Retain
 
 
 
