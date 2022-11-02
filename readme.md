@@ -117,46 +117,31 @@ Example connection from Jupyter Lab shell:
 
 ## Building AMIs
 
-Public AMIs are available in specific regions. Select the AMI for your target region and deploy with the noted version of EMR for best results.
+Hail on EMR requires the use of a custom AMI with Hail, Spark, VEP, and reference genomes preconfigured.  This build process is driven by Packer, and leverages AWS CodeBuild.  Note that some of these software packages are optional, and the build process can be executed for different versions or combinations of these software packages.
 
-### Hail with VEP
+## Execute a GUI Build in CodeBuild
 
-| Region         | Hail Version | VEP Version | EMR Version | AMI ID               |
-|:--------------:|:------------:|:-----------:|:-----------:|:--------------------:|
-| eu-north-1     | 0.2.37      | 99          | 5.29.0      | ami-0097c8916181505c5 |
-| ap-south-1     | 0.2.37      | 99          | 5.29.0      | ami-0cc18a6e8cf105185 |
-| eu-west-3      | 0.2.37      | 99          | 5.29.0      | ami-09f35326ba84d2ee0 |
-| eu-west-2      | 0.2.37      | 99          | 5.29.0      | ami-04bbc6780b6719abe |
-| eu-west-1      | 0.2.37      | 99          | 5.29.0      | ami-05adfeb1ffea4f488 |
-| ap-northeast-2 | 0.2.37      | 99          | 5.29.0      | ami-0fac2662a22702e92 |
-| ap-northeast-1 | 0.2.37      | 99          | 5.29.0      | ami-0a2a15ed71805f23d |
-| sa-east-1      | 0.2.37      | 99          | 5.29.0      | ami-0ea74a00f1109fe14 |
-| ca-central-1   | 0.2.37      | 99          | 5.29.0      | ami-052c9e8e247ad39b1 |
-| ap-southeast-1 | 0.2.37      | 99          | 5.29.0      | ami-07124736552a4152b |
-| ap-southeast-2 | 0.2.37      | 99          | 5.29.0      | ami-0fa25f9d65099152c |
-| eu-central-1   | 0.2.37      | 99          | 5.29.0      | ami-0a9294d79a555d742 |
-| us-east-1      | 0.2.37      | 99          | 5.29.0      | ami-0f33e21674eed03c6 |
-| us-east-2      | 0.2.37      | 99          | 5.29.0      | ami-03cc99a0a57b9a8f4 |
-| us-west-1      | 0.2.37      | 99          | 5.29.0      | ami-0ed287d132c16a457 |
-| us-west-2      | 0.2.37      | 99          | 5.29.0      | ami-083d074beb4c62cfc |
+Before building, keep the following in mind:
 
-### Hail Only
+- Builds including VEP can take a _very_ long time (upwards of 1-2 hours in some cases)
+- AMI names are unique.  If building an updated AMI, deregister the previous
 
-| Region         | Hail Version | EMR Version | AMI ID                |
-|:--------------:|:------------:|:-----------:|:--------------------: |
-| eu-north-1     | 0.2.37       | 5.29.0      | ami-0e1073531c44d97fd |
-| ap-south-1     | 0.2.37       | 5.29.0      | ami-0d7f3eb79ca77814e |
-| eu-west-3      | 0.2.37       | 5.29.0      | ami-0d2bdc6b6c8d7ee65 |
-| eu-west-2      | 0.2.37       | 5.29.0      | ami-010fbae32eeef43c2 |
-| eu-west-1      | 0.2.37       | 5.29.0      | ami-01f549e899e6ae0a5 |
-| ap-northeast-2 | 0.2.37       | 5.29.0      | ami-0bca5935cf0d721e9 |
-| ap-northeast-1 | 0.2.37       | 5.29.0      | ami-0f1e8d4a69787b35c |
-| sa-east-1      | 0.2.37       | 5.29.0      | ami-0e64359f354873552 |
-| ca-central-1   | 0.2.37       | 5.29.0      | ami-0f112f6c05a7b00ad |
-| ap-southeast-1 | 0.2.37       | 5.29.0      | ami-0c7f042eea8515d62 |
-| ap-southeast-2 | 0.2.37       | 5.29.0      | ami-0b74c4b9159857c59 |
-| eu-central-1   | 0.2.37       | 5.29.0      | ami-06852915abd17f5f7 |
-| us-east-1      | 0.2.37       | 5.29.0      | ami-0173952a452aa92d8 |
-| us-east-2      | 0.2.37       | 5.29.0      | ami-0377c5c1a13b4198a |
-| us-west-1      | 0.2.37       | 5.29.0      | ami-0998c9b84d9d9fd93 |
-| us-west-2      | 0.2.37       | 5.29.0      | ami-0dc94d5d800f0e6e9 |
+From the AWS CodeBuild dashboard, select the desired build's radio button and click **Start build**.
+
+![codebuild_1](docs/images/codebuild_start.png)
+
+On the next page you may optionally override any build parameters then click **Start build**.
+
+Once the build beings you can optionally tail logs to view progress.  Closing this window will not terminate the build.
+
+![codebuild_2](docs/images/codebuild_running.png)
+
+## Troubleshooting
+
+### AMI Exists
+
+AMI names are unique.  In order to rebuild an AMI with the same name you will need to deregister the AMI your AWS account and target region.
+
+### Additional Documentation
+
+Additional documentation on the building a custom Hail AMI can be found in the [AMI Creation Guide](/ami-creation.md# Building a Custom Hail AMI).
