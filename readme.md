@@ -12,7 +12,7 @@ This repository contains an AWS Quick Start solution for rapid deployment into y
 
 The core directories in this repository are:
 
-- packer - Documentation and example configuration of Packer (used in the AMI build process)
+- packer-files - Documentation and example configuration of Packer (used in the AMI build process)
 - sagemaker - Sample Jupyter Notebooks and shell scripts
 - submodules - Optional submodules supporting the deployment
 - templates - CloudFormation nested stacks
@@ -29,7 +29,7 @@ This document will walk through deployment steps, and highlight potential pitfal
     - [Autoscaling Task Nodes](#autoscaling-task-nodes)
   - [SageMaker Notebook Overview](#sagemaker-notebook-overview)
     - [SSM Access](#ssm-access)
-  - [Public AMIs](#public-amis)
+  - [Building AMIs](#public-amis)
     - [Hail with VEP](#hail-with-vep)
     - [Hail Only](#hail-only)
 
@@ -57,7 +57,7 @@ To deploy Hail on EMR, follow these steps:
 
     ![cloudformation-primary-stack-outputs](docs/images/deployment/cloudformation-primary-stack-outputs.png)
 
-7. In the Service Catalog Portfolio requires assignment to specific Users, Groups, or Roles.  Select the `Users, Groups, or Roles` tab and click `Add groups, roles, users`.
+7. The Service Catalog Portfolio requires assignment to specific Users, Groups, or Roles.  Select the `Users, Groups, or Roles` tab and click `Add groups, roles, users`.
 
     ![service-catalog-assignment](docs/images/deployment/service-catalog-assignment.png)
 
