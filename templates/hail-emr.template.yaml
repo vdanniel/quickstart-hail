@@ -406,7 +406,6 @@ Parameters:
     Default: "no"
 
   pPermissionBoundaryARN:
-    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
     Description: "Enter Permission Boundary ARN."
     Type: "String"
     Default: ""
@@ -589,7 +588,7 @@ Conditions:
 
   CondEnableEncryption: !Not [ !Equals [ !Ref pKmsEbsArn, "" ] ]
   CondCreateTaskNodes:  !Not [ !Equals [ !Ref pEmrMaxTaskNodeCount, "0" ] ]
-  #FIXME Remove comments once custom AMIs are built in each applicable region and mappings are updated. 
+  #FIXME Remove comments once custom AMIs are built in each applicable region and mappings are updated.
   #CondCustomAmi: !Not [ !Equals [ !Ref pAmi, "" ] ]
   UsingPermissionBoundary: !Equals [!Ref pUsePermissionBoundary, "yes"]
   UsingIamPrefix: !Equals [!Ref pUseIamPrefix, "yes"]
