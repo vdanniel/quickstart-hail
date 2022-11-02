@@ -69,7 +69,7 @@ To deploy Hail on EMR, follow these steps:
 
     ![service-catalog-products](docs/images/deployment/service-catalog-products.png)
 
-10. Launch a Hail EMR Cluster using your custom Hail AMI built from the [Building AMIs](#building-amis) section to get started. 
+10. Launch a Hail EMR Cluster using your custom Hail AMI built from the [Building AMIs](#building-amis) section to get started. **Note: Building custom AMI is required before launching EMR cluster.**
 
     ![service-catalog-launch](docs/images/deployment/service-catalog-launch.png)
 
