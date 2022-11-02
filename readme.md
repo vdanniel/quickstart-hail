@@ -99,7 +99,7 @@ Notebook service catalog deployments also require a parameter adjustment to comp
 
 Task nodes can be set to 0 to omit them.  The target market, *SPOT* or *ON_DEMAND*, is also set through parameters.  If *SPOT* is selected, the bid price is set to the current on-demand price of the selected instance type.
 
-EMR uses [managed scaling]([AWS Systems Manager Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) which lets you automatically increase or decrease the number of instances or units in your cluster based on workload. EMR managed scaling continuously evaluates cluster metrics to make scaling decisions that optimize your clusters for cost and speed. 
+EMR uses [managed scaling](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) which lets you automatically increase or decrease the number of instances or units in your cluster based on workload. EMR managed scaling continuously evaluates cluster metrics to make scaling decisions that optimize your clusters for cost and speed. 
 
 ## SageMaker Notebook Overview
 
@@ -126,15 +126,17 @@ Before building, keep the following in mind:
 - Builds including VEP can take a _very_ long time (upwards of 1-2 hours in some cases)
 - AMI names are unique.  If building an updated AMI, deregister the previous
 
-From the AWS CodeBuild dashboard, select the desired build's radio button and click **Start build**.
+From the AWS CodeBuild dashboard, select the desired build's radio button and click **Start with overrides**.
 
 ![codebuild_1](docs/images/codebuild_start.png)
 
-On the next page you may optionally override any build parameters then click **Start build**.
+On the next page you may optionally override any build parameters but are required to override the HAIL_Version value to whatever hail version you wish to use then click **Start build**.
 
-Once the build beings you can optionally tail logs to view progress.  Closing this window will not terminate the build.
+![codebuild_2](docs/images/codebuild_override.png)
 
-![codebuild_2](docs/images/codebuild_running.png)
+Once the build begins you can optionally tail logs to the view progress.  Closing this window will not terminate the build.
+
+![codebuild_3](docs/images/codebuild_running.png)
 
 ### Troubleshooting
 
@@ -144,4 +146,4 @@ AMI names are unique.  In order to rebuild an AMI with the same name you will ne
 
 #### Additional Documentation
 
-Additional documentation on the building a custom Hail AMI can be found in the [AMI Creation Guide](/docs/ami-creation.md# Building a Custom Hail AMI).
+Additional documentation on the building a custom Hail AMI can be found in the [AMI Creation Guide](docs/ami-creation.md)
