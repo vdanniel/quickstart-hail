@@ -23,15 +23,9 @@ Parameters:
     MinLength: 3
     Type: "String"
 
-  pEmrCoreInstanceCount:
+  pEmrCoreNodeTargetCount:
     Default: 1
-    Description: "Must be 1 or greater."
-    MinValue: 1 # Cannot be 0.
-    Type: "Number"
-
-  pEmrMaxCoreInstanceCount:
-    Default: 1
-    Description: "Must be 1 or greater."
+    Description: "Target Core Instance count. Must be 1 or greater."
     MinValue: 1 # Cannot be 0.
     Type: "Number"
 
@@ -234,15 +228,21 @@ Parameters:
     Default: "m5.xlarge"
     Type: "String"
 
-  pEmrMinTaskNodeCount:
-    Default: 1
-    Description: "Value of 0 disables task nodes and auto scaling."
+  pEmrMaxNodeCount:
+    Default: 0
+    Description: "Must be equal to or greater than 0."
+    MaxValue: 50
     Type: "Number"
 
-  pEmrMaxTaskNodeCount:
-    Default: 1
-    Description: "Must be equal to or greater than minimum."
+  pEmrMinNodeCount:
+    Default: 0
+    Description: "Must be equal to or greater than 0."
     MaxValue: 50
+    Type: "Number"
+
+  pEmrTargetTaskNodeCount:
+    Default: 0
+    Description: "Value of 0 disables task nodes."
     Type: "Number"
 
   pEmrTaskNodeSize:
@@ -457,6 +457,8 @@ Metadata:
           - "pHailBucket"
           - "pEmrInstanceTerminationProtection"
           - "pAllowSsmShell"
+          - "pEmrMaxNodeCount"
+          - "pEmrMinNodeCount"
       - Label:
           default: "Master Instance Configuration"
         Parameters:
@@ -464,8 +466,7 @@ Metadata:
       - Label:
           default: "Core Instance Configuration"
         Parameters:
-          - "pEmrCoreInstanceCount"
-          - "pEmrMaxCoreInstanceCount"
+          - "pEmrCoreNodeTargetCount"
           - "pEmrCoreInstanceSize"
           - "pEmrCoreInstanceDataVolSize"
       - Label:
@@ -473,8 +474,7 @@ Metadata:
         Parameters:
           - "pTaskNodeMarket"
           - "pEmrTaskNodeSize"
-          - "pEmrMinTaskNodeCount"
-          - "pEmrMaxTaskNodeCount"
+          - "pEmrTargetTaskNodeCount"
       - Label:
           default: "Identity and Access Management"
         Parameters:
@@ -496,10 +496,8 @@ Metadata:
         default: "Hail AMI"
       pClusterName:
         default: "Cluster Name"
-      pEmrCoreInstanceCount:
-        default: "Target Number of Core Nodes"
-      pEmrMaxCoreInstanceCount:
-        default: "Maximum Number of Core Nodes"
+      pEmrCoreNodeTargetCount:
+        default: "Target Number of Core nodes"
       pEmrCoreInstanceDataVolSize:
         default: "Scratch Volume Size"
       pEmrCoreInstanceSize:
@@ -512,10 +510,12 @@ Metadata:
         default: "Master Node Size"
       pEmrReleaseLabel:
         default: "EMR Release"
-      pEmrMinTaskNodeCount:
-        default: "Minimum number of Task Nodes"
-      pEmrMaxTaskNodeCount:
-        default: "Maximum number of Task Nodes"
+      pEmrMinNodeCount:
+        default: "Minimum number of Task & Worker nodes total."
+      pEmrMaxNodeCount:
+        default: "Maximum number of Task & Worker nodes total."
+      pEmrTargetTaskNodeCount:
+        default: "Target number of instances of Task nodes."
       pEmrTaskNodeSize:
         default: "Task Node Size"
       pKmsEbsArn:
@@ -585,9 +585,9 @@ Metadata:
 #       ami: 'ami-xxxxxxxxxxxxxxxxx'
 
 Conditions:
-
+  #FIXME remove this if not in use.
   CondEnableEncryption: !Not [ !Equals [ !Ref pKmsEbsArn, "" ] ]
-  CondCreateTaskNodes:  !Not [ !Equals [ !Ref pEmrMaxTaskNodeCount, "0" ] ]
+  CondCreateTaskNodes:  !Not [ !Equals [ !Ref pEmrTargetTaskNodeCount, "0" ] ]
   #FIXME Remove comments once custom AMIs are built in each applicable region and mappings are updated.
   #CondCustomAmi: !Not [ !Equals [ !Ref pAmi, "" ] ]
   UsingPermissionBoundary: !Equals [!Ref pUsePermissionBoundary, "yes"]
@@ -669,7 +669,7 @@ Resources:
           Market: "ON_DEMAND"
           Name: "Master Instance Group"
         CoreInstanceGroup:
-          InstanceCount: !Ref pEmrCoreInstanceCount
+          InstanceCount: !Ref pEmrCoreNodeTargetCount
           InstanceType: !Ref pEmrCoreInstanceSize
           Market: "ON_DEMAND"
           Name: "Core Instance Group"
@@ -680,7 +680,7 @@ Resources:
                   VolumeType: "gp2"
                 VolumesPerInstance: 1
         TaskInstanceGroups:
-        - InstanceCount: !Ref pEmrMinTaskNodeCount
+        - InstanceCount: !Ref pEmrTargetTaskNodeCount
           InstanceType: !Ref pEmrTaskNodeSize
           Market: !Ref pTaskNodeMarket
           Name: "Task Instance Group"
@@ -689,9 +689,8 @@ Resources:
       LogUri: !Join ["", ["s3://", !Ref pHailBucket, "/elasticmapreduce/"]]
       ManagedScalingPolicy:
         ComputeLimits:
-          MaximumCapacityUnits: !Ref pEmrMaxTaskNodeCount
-          MinimumCapacityUnits: !Ref pEmrMinTaskNodeCount
-          MaximumCoreCapacityUnits: !Ref pEmrMaxCoreInstanceCount
+          MaximumCapacityUnits: !Ref pEmrMaxNodeCount
+          MinimumCapacityUnits: !Ref pEmrMinNodeCount
 
           UnitType: Instances
       Name: !Ref pClusterName
