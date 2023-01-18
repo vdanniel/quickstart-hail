@@ -113,3 +113,6 @@ taskcat_outputs
 
 # docs
 index.html
+
+# DS_Store
+.DS_Store
