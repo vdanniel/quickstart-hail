@@ -13,7 +13,7 @@ Parameters:
     AllowedValues:
       - "false"
       - "true"
-    Default: "false"
+    Default: "true"
     Description: "Must also be set to true on SageMaker CloudFormation stacks."
     Type: "String"
 
@@ -25,7 +25,7 @@ Parameters:
 
   pEmrCoreNodeTargetCount:
     Default: 1
-    Description: "Target Core Instance count. Must be 1 or greater."
+    Description: "Must be 1 or greater."
     MinValue: 1 # Cannot be 0.
     Type: "Number"
 
@@ -229,20 +229,14 @@ Parameters:
     Type: "String"
 
   pEmrMaxNodeCount:
-    Default: 0
-    Description: "Must be equal to or greater than 0."
-    MaxValue: 50
-    Type: "Number"
-
-  pEmrMinNodeCount:
-    Default: 0
-    Description: "Must be equal to or greater than 0."
+    Default: 10
+    Description: "Must be equal to or greater than 1 and less than 50.  Can be changed later."
     MaxValue: 50
     Type: "Number"
 
   pEmrTargetTaskNodeCount:
     Default: 0
-    Description: "Value of 0 disables task nodes."
+    Description: "Value of 0 disables task nodes.  Generally not needed for Hail."
     Type: "Number"
 
   pEmrTaskNodeSize:
@@ -458,7 +452,6 @@ Metadata:
           - "pEmrInstanceTerminationProtection"
           - "pAllowSsmShell"
           - "pEmrMaxNodeCount"
-          - "pEmrMinNodeCount"
       - Label:
           default: "Master Instance Configuration"
         Parameters:
@@ -497,7 +490,7 @@ Metadata:
       pClusterName:
         default: "Cluster Name"
       pEmrCoreNodeTargetCount:
-        default: "Target Number of Core nodes"
+        default: "Target Number of Core nodes."
       pEmrCoreInstanceDataVolSize:
         default: "Scratch Volume Size"
       pEmrCoreInstanceSize:
@@ -510,10 +503,8 @@ Metadata:
         default: "Master Node Size"
       pEmrReleaseLabel:
         default: "EMR Release"
-      pEmrMinNodeCount:
-        default: "Minimum number of Task & Worker nodes total."
       pEmrMaxNodeCount:
-        default: "Maximum number of Task & Worker nodes total."
+        default: "Maximum number of Task & Worker nodes EMR can scale to."
       pEmrTargetTaskNodeCount:
         default: "Target number of instances of Task nodes."
       pEmrTaskNodeSize:
@@ -679,18 +670,23 @@ Resources:
                   SizeInGB: !Ref pEmrCoreInstanceDataVolSize
                   VolumeType: "gp2"
                 VolumesPerInstance: 1
+        #If
         TaskInstanceGroups:
-        - InstanceCount: !Ref pEmrTargetTaskNodeCount
-          InstanceType: !Ref pEmrTaskNodeSize
-          Market: !Ref pTaskNodeMarket
-          Name: "Task Instance Group"
+          !If
+          - CondCreateTaskNodes
+          -
+            InstanceCount: !Ref pEmrTargetTaskNodeCount
+            InstanceType: !Ref pEmrTaskNodeSize
+            Market: !Ref pTaskNodeMarket
+            Name: "Task Instance Group"
+          - !Ref "AWS::NoValue"
         TerminationProtected: !Ref pEmrInstanceTerminationProtection
       JobFlowRole: !Ref instanceProfileEmrEc2
       LogUri: !Join ["", ["s3://", !Ref pHailBucket, "/elasticmapreduce/"]]
       ManagedScalingPolicy:
         ComputeLimits:
           MaximumCapacityUnits: !Ref pEmrMaxNodeCount
-          MinimumCapacityUnits: !Ref pEmrMinNodeCount
+          MinimumCapacityUnits: 1
 
           UnitType: Instances
       Name: !Ref pClusterName

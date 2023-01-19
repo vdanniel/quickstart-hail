@@ -265,6 +265,9 @@ Resources:
               pip install ipywidgets==7.7.1
               source /home/ec2-user/anaconda3/bin/deactivate
 
+              #install netcat
+              sudo yum install -y nmap-ncat
+
               EOF
       OnStart:
         - Content:
@@ -303,6 +306,9 @@ Resources:
               pip install jupyterlab-widgets==1.1.1
               pip install ipywidgets==7.7.1
               source /home/ec2-user/anaconda3/bin/deactivate
+
+              #install netcat
+              sudo yum install -y nmap-ncat
 
               # Prevent iopub throttling
               sed -i.bak 's/^#c.NotebookApp.iopub_data_rate_limit.*$/c.NotebookApp.iopub_data_rate_limit = 1000000/' ~/.jupyter/jupyter_notebook_config.py
