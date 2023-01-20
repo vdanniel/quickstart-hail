@@ -7,7 +7,7 @@ Parameters:
     AllowedValues:
       - "false"
       - "true"
-    Default: "false"
+    Default: "true"
     Description: "Must also be set to true on EMR CloudFormation stacks."
     Type: "String"
 
