@@ -91,7 +91,6 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: "AES256"
-      #FIXME - REMOVE before uploading to GitHub
       AccelerateConfiguration:
         AccelerationStatus: Enabled
       Tags:
@@ -99,8 +98,7 @@ Resources:
           Value: !Ref pTagEnvironment
         - Key: "owner"
           Value: !Ref pTagOwner
-    #FIXME - Change to Retain before updating Github
-    #DeletionPolicy: Retain
+    DeletionPolicy: Retain
 
   sageMakerBucketParameter:
     Type: "AWS::SSM::Parameter"

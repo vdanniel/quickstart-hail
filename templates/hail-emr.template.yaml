@@ -5,7 +5,6 @@ Description: "EMR with Hail and VEP (qs-1qp776mgo)"
 Parameters:
 
   pAmi:
-    #Note: Can make this optional in a custom version of this template if you build out AMIs in each region and update mapping section further below.
     Description: "(Required) Custom Hail AMI."
     Type: "String"
 
@@ -137,10 +136,10 @@ Parameters:
       - "true"
       - "false"
     Default: "false"
-    Description: "Applies to Master and Core Nodes in the cluster."
+    Description: "Applies to Primary and Core Nodes in the cluster."
     Type: "String"
 
-  pEmrMasterInstanceSize:
+  pEmrPrimaryInstanceSize:
     AllowedValues:
       - "c1.medium"
       - "c1.xlarge"
@@ -341,7 +340,7 @@ Parameters:
     Type: "String"
 
   pLivyAccessSecurityGroup:
-    Description: "DO NOT CHANGE. SSM parameter set by the hail-core stack. Security Group ID that will be allowed access to the master node on port 8998."
+    Description: "DO NOT CHANGE. SSM parameter set by the hail-core stack. Security Group ID that will be allowed access to the primary node on port 8998."
     Default: "/hail/sagemaker/security-group-id"
     AllowedValues:
       - "/hail/sagemaker/security-group-id"
@@ -453,9 +452,9 @@ Metadata:
           - "pAllowSsmShell"
           - "pEmrMaxNodeCount"
       - Label:
-          default: "Master Instance Configuration"
+          default: "Primary Instance Configuration"
         Parameters:
-          - "pEmrMasterInstanceSize"
+          - "pEmrPrimaryInstanceSize"
       - Label:
           default: "Core Instance Configuration"
         Parameters:
@@ -499,8 +498,8 @@ Metadata:
         default: "Root Volume Size"
       pEmrInstanceTerminationProtection:
         default: "Instance Termination Protection"
-      pEmrMasterInstanceSize:
-        default: "Master Node Size"
+      pEmrPrimaryInstanceSize:
+        default: "Primary Node Size"
       pEmrReleaseLabel:
         default: "EMR Release"
       pEmrMaxNodeCount:
@@ -538,49 +537,10 @@ Metadata:
       pIamSuffix:
         default: "Suffix for all roles to be created"
 
-#FIXME You can remove commented Mappings after creating custom AMI in each region for use in greater environment.  Linked to CondCustomAmi logic.
-# Mappings:
-#
-#   Region:
-#     eu-north-1:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     ap-south-1:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     eu-west-3:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     eu-west-2:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     eu-west-1:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     ap-northeast-2:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     ap-northeast-1:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     sa-east-1:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     ca-central-1:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     ap-southeast-1:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     ap-southeast-2:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     eu-central-1:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     us-east-1:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     us-east-2:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     us-west-1:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
-#     us-west-2:
-#       ami: 'ami-xxxxxxxxxxxxxxxxx'
 
 Conditions:
-  #FIXME remove this if not in use.
   CondEnableEncryption: !Not [ !Equals [ !Ref pKmsEbsArn, "" ] ]
   CondCreateTaskNodes:  !Not [ !Equals [ !Ref pEmrTargetTaskNodeCount, "0" ] ]
-  #FIXME Remove comments once custom AMIs are built in each applicable region and mappings are updated.
-  #CondCustomAmi: !Not [ !Equals [ !Ref pAmi, "" ] ]
   UsingPermissionBoundary: !Equals [!Ref pUsePermissionBoundary, "yes"]
   UsingIamPrefix: !Equals [!Ref pUseIamPrefix, "yes"]
   UsingIamSuffix: !Equals [!Ref pUseIamSuffix, "yes"]
@@ -642,23 +602,21 @@ Resources:
         - Classification: "emrfs-site"
           ConfigurationProperties:
             fs.s3.maxConnections: "1000"
-      #FIXME You can remove comments after building custom AMI in each region to map to this logic.
-      # CustomAmiId: !If
-      #   - CondCustomAmi
-      #   - !Ref pAmi
-      #   - !FindInMap [ Region, !Ref "AWS::Region", ami ]
       EbsRootVolumeSize: !Ref pEmrInstanceRootVolSize
       Instances:
+        #Required Parameter Name
         AdditionalMasterSecurityGroups:
-          - !Ref sgEmrMasterAccess
+          - !Ref sgEmrPrimaryAccess
+        #Required Parameter Name
         AdditionalSlaveSecurityGroups:
-          - !Ref sgEmrSlaveAccess
+          - !Ref sgEmrWorkerAccess
         Ec2SubnetId: !Ref pSubnetId
+        #Required Parameter Name
         MasterInstanceGroup:
           InstanceCount: 1
-          InstanceType: !Ref pEmrMasterInstanceSize
+          InstanceType: !Ref pEmrPrimaryInstanceSize
           Market: "ON_DEMAND"
-          Name: "Master Instance Group"
+          Name: "Primary Instance Group"
         CoreInstanceGroup:
           InstanceCount: !Ref pEmrCoreNodeTargetCount
           InstanceType: !Ref pEmrCoreInstanceSize
@@ -670,7 +628,6 @@ Resources:
                   SizeInGB: !Ref pEmrCoreInstanceDataVolSize
                   VolumeType: "gp2"
                 VolumesPerInstance: 1
-        #If
         TaskInstanceGroups:
           !If
           - CondCreateTaskNodes
@@ -687,7 +644,6 @@ Resources:
         ComputeLimits:
           MaximumCapacityUnits: !Ref pEmrMaxNodeCount
           MinimumCapacityUnits: 1
-
           UnitType: Instances
       Name: !Ref pClusterName
       ReleaseLabel: !Ref pEmrReleaseLabel
@@ -824,7 +780,7 @@ Resources:
             Action: "sts:AssumeRole"
       Path: "/"
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceRole"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonElasticMapReduceRole"
       Policies:
         - PolicyName: #"s3AccessBootstrapScripts"
             !Sub
@@ -836,7 +792,10 @@ Resources:
             Statement:
               - Effect: "Allow"
                 Action: "s3:*"
-                Resource: !Join [ "", ["arn:aws:s3:::", !Ref pHailBucket, "/emr-bootstrap-scripts/bootstrap-actions/*"]]
+                Resource:
+                  !Sub
+                    - 'arn:${AWS::Partition}:s3:::${HailBucket}/emr-bootstrap-scripts/bootstrap-actions/*'
+                    - HailBucket: !Ref pHailBucket
       RoleName: #"emr-cluster-{UniqueId}"
         !Sub
           - '${Prefix}emr-cluster-${UniqueId}${Suffix}'
@@ -857,8 +816,8 @@ Resources:
               Service: "ec2.amazonaws.com"
             Action: "sts:AssumeRole"
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforEC2Role"
-        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonElasticMapReduceforEC2Role"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
       Path: "/"
       Policies:
         - PolicyName: #"s3ManifestPutObject"
@@ -871,7 +830,10 @@ Resources:
             Statement:
               - Effect: "Allow"
                 Action: "s3:PutObject"
-                Resource: !Join [ "", ["arn:aws:s3:::", !Ref pHailBucket, ":/manifests/*"]]
+                Resource:
+                  !Sub
+                    - 'arn:${AWS::Partition}:s3:::${HailBucket}/manifests/*'
+                    - HailBucket: !Ref pHailBucket
         - PolicyName: #"s3AccessBootstrapScripts"
             !Sub
               - '${Prefix}s3AccessBootstrapScripts${Suffix}'
@@ -882,7 +844,10 @@ Resources:
             Statement:
               - Effect: "Allow"
                 Action: "s3:*"
-                Resource: !Join [ "", ["arn:aws:s3:::", !Ref pHailBucket, "/emr-bootstrap-scripts/*"]]
+                Resource:
+                  !Sub
+                    - 'arn:${AWS::Partition}:s3:::${HailBucket}/emr-bootstrap-scripts/*'
+                    - HailBucket: !Ref pHailBucket
         - PolicyName: #"cloudformationDescribeStack"
             !Sub
               - '${Prefix}cloudformationDescribeStack${Suffix}'
@@ -918,7 +883,7 @@ Resources:
             Action: "sts:AssumeRole"
       Path: "/"
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforAutoScalingRole"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonElasticMapReduceforAutoScalingRole"
       RoleName: #"emr-autoscaling-{UniqueId}"
         !Sub
           - '${Prefix}emr-autoscaling-${UniqueId}${Suffix}'
@@ -926,22 +891,22 @@ Resources:
             Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
             UniqueId: !Select [4, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]
 
-  # Add full ingress from master.  Separate from in group rules to prevent cyclical dependencies.
-  sgIngressEmrMaster:
+  # Add full ingress from primary.  Separate from in group rules to prevent cyclical dependencies.
+  sgIngressEmrPrimary:
     Type: "AWS::EC2::SecurityGroupIngress"
     Properties:
-      GroupId: !Ref sgEmrSlaveAccess
+      GroupId: !Ref sgEmrWorkerAccess
       IpProtocol: "-1"
       FromPort: -1
       ToPort: -1
-      SourceSecurityGroupId: !Ref sgEmrMasterAccess
-      Description: "Full Ingress from master node"
+      SourceSecurityGroupId: !Ref sgEmrPrimaryAccess
+      Description: "Full Ingress from primary node"
 
-  sgEmrMasterAccess:
+  sgEmrPrimaryAccess:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupName: !Join ["-",["emr-master", !Ref pClusterName]]
-      GroupDescription: "emr master node access"
+      GroupName: !Join ["-",["emr-primary", !Ref pClusterName]]
+      GroupDescription: "emr primary node access"
       VpcId: !Ref pVpcId
       SecurityGroupIngress:
         - IpProtocol: "tcp"
@@ -957,8 +922,8 @@ Resources:
         - IpProtocol: "-1"
           FromPort: -1
           ToPort: -1
-          SourceSecurityGroupId: !Ref sgEmrSlaveAccess
-          Description: "Full Ingress from slave nodes"
+          SourceSecurityGroupId: !Ref sgEmrWorkerAccess
+          Description: "Full Ingress from worker nodes"
       SecurityGroupEgress:
         - IpProtocol: "-1"
           FromPort: -1
@@ -967,7 +932,7 @@ Resources:
           Description: "all"
       Tags:
         - Key: "Name"
-          Value: !Join ["-",["emr-master", !Ref pClusterName]]
+          Value: !Join ["-",["emr-primary", !Ref pClusterName]]
         - Key: "managed-by"
           Value: "cloudformation"
         - Key: "environment"
@@ -975,11 +940,11 @@ Resources:
         - Key: "owner"
           Value: !Ref pTagOwner
 
-  sgEmrSlaveAccess:
+  sgEmrWorkerAccess:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupName: !Join ["-",["emr-slave", !Ref pClusterName]]
-      GroupDescription: "emr slave node access"
+      GroupName: !Join ["-",["emr-worker", !Ref pClusterName]]
+      GroupDescription: "emr worker node access"
       VpcId: !Ref pVpcId
       SecurityGroupEgress:
         - IpProtocol: "-1"
@@ -989,7 +954,7 @@ Resources:
           Description: "all"
       Tags:
         - Key: "Name"
-          Value: !Join ["-",["emr-slave", !Ref pClusterName]]
+          Value: !Join ["-",["emr-worker", !Ref pClusterName]]
         - Key: "managed-by"
           Value: "cloudformation"
         - Key: "environment"

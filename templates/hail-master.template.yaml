@@ -71,9 +71,9 @@ Metadata:
       VPCId:
         default: "Existing VPC ID"
       VPCSubnetId:
-        default: "Existing Subnet ID"
+        default: "Existing subnet ID"
       VPCSubnetType:
-        default: "Existing Subnet type"
+        default: "Existing subnet type"
       UsePermissionBoundary:
         default: "Use Permission Boundary"
       PermissionBoundaryARN:
@@ -120,7 +120,7 @@ Parameters:
 
   CreateHailBucket:
     Type: "String"
-    Description: "Select No to use an existing bucket."
+    Description: "Select no to use an existing bucket."
     AllowedValues:
       - "yes"
       - "no"
@@ -133,7 +133,7 @@ Parameters:
 
   CreateSageMakerBucket:
     Type: "String"
-    Description: "Select No to use an existing bucket."
+    Description: "Select no to use an existing bucket."
     AllowedValues:
       - "yes"
       - "no"
@@ -179,7 +179,7 @@ Parameters:
     Default: ""
 
   VPCSubnetType:
-    Description: "Required for an existing VPC target. Should match the type of subnet specified by Subnet Id. Type of subnet compute resources will be deployed in and also used to create custom AMIs. A private subnet is recommended. Leave blank if using a 'New' VPC Target."
+    Description: "Required for an existing VPC target. Should match the type of subnet specified by subnet Id. Type of subnet compute resources will be deployed in and also used to create custom AMIs. A private subnet is recommended. Leave blank if using a 'New' VPC Target."
     Type: "String"
     AllowedValues:
       - "public"

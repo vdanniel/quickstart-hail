@@ -343,12 +343,12 @@ Resources:
               - Effect: "Allow"
                 Action: "s3:*"
                 Resource:
-                  - !Sub "arn:aws:s3:::${pSageMakerBucket}/${pName}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${pSageMakerBucket}/${pName}/*"
               - Effect: "Allow"
                 Action:
                   - "s3:ListObject"
                   - "s3:ListBucket"
-                Resource: !Sub "arn:aws:s3:::${pSageMakerBucket}"
+                Resource: !Sub "arn:${AWS::Partition}:s3:::${pSageMakerBucket}"
         - PolicyName: #"s3ListPaths"
             !Sub
               - '${Prefix}s3ListPaths${Suffix}'
@@ -360,7 +360,7 @@ Resources:
               - Effect: "Allow"
                 Action: "s3:ListBucket"
                 Resource:
-                  - !Sub "arn:aws:s3:::${pSageMakerBucket}"
+                  - !Sub "arn:${AWS::Partition}:s3:::${pSageMakerBucket}"
                 Condition:
                   StringLike:
                     s3:prefix:
@@ -371,8 +371,8 @@ Resources:
                 Action:
                   - "s3:GetObject"
                 Resource:
-                  - !Sub "arn:aws:s3:::${pSageMakerBucket}/scripts/*"
-                  - !Sub "arn:aws:s3:::${pSageMakerBucket}/common-notebooks/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${pSageMakerBucket}/scripts/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${pSageMakerBucket}/common-notebooks/*"
         - PolicyName: #"s3hailFullRead"
             !Sub
               - '${Prefix}s3hailFullRead${Suffix}'
@@ -386,8 +386,8 @@ Resources:
                   - "s3:Get*"
                   - "s3:List*"
                 Resource:
-                  - !Sub "arn:aws:s3:::${pHailBucket}/*"
-                  - !Sub "arn:aws:s3:::${pHailBucket}"
+                  - !Sub "arn:${AWS::Partition}:s3:::${pHailBucket}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${pHailBucket}"
         - PolicyName: #"cloudwatchWrite"
             !Sub
               - '${Prefix}cloudwatchWrite${Suffix}'
@@ -435,7 +435,7 @@ Resources:
           - Effect: "Allow"
             Action:
               - "ssm:StartSession"
-            Resource: "arn:aws:ec2:*:*:instance/*"
+            Resource: !Sub "arn:${AWS::Partition}:ec2:*:*:instance/*"
             Condition:
               StringLike:
                 "ssm:resourceTag/allow-emr-ssm":
