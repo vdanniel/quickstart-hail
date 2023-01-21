@@ -226,6 +226,7 @@ Resources:
       RoleArn: !GetAtt role.Arn
       LifecycleConfigName: !GetAtt lifecycleConfiguration.NotebookInstanceLifecycleConfigName
       NotebookInstanceName: !Ref pName
+      PlatformIdentifier: notebook-al2-v1
       RootAccess: Enabled
       KmsKeyId: !If [ CondEnableEncryption, !Ref pKmsEbsArn, !Ref "AWS::NoValue"]
       SubnetId: !Ref pSubnetId
@@ -258,12 +259,6 @@ Resources:
               set -ex
               /usr/bin/aws s3 cp s3://"$BUCKET"/scripts/ "$EC2_USER_BIN" --recursive
               find "$EC2_USER_BIN" -type f -exec chmod -v 700 {} \;
-
-              source /home/ec2-user/anaconda3/bin/activate "$ENVIRONMENT"
-              pip uninstall -y jupyterlab-widgets ipywidgets
-              pip install jupyterlab-widgets==1.1.1
-              pip install ipywidgets==7.7.1
-              source /home/ec2-user/anaconda3/bin/deactivate
 
               #install netcat
               sudo yum install -y nmap-ncat
@@ -299,12 +294,6 @@ Resources:
               source /home/ec2-user/anaconda3/bin/activate JupyterSystemEnv
               # Required for "%manage_spark"
               jupyter labextension install @jupyter-widgets/jupyterlab-manager
-              source /home/ec2-user/anaconda3/bin/deactivate
-
-              source /home/ec2-user/anaconda3/bin/activate "$ENVIRONMENT"
-              pip uninstall -y jupyterlab-widgets ipywidgets
-              pip install jupyterlab-widgets==1.1.1
-              pip install ipywidgets==7.7.1
               source /home/ec2-user/anaconda3/bin/deactivate
 
               #install netcat

@@ -603,6 +603,7 @@ Resources:
           ConfigurationProperties:
             fs.s3.maxConnections: "1000"
       EbsRootVolumeSize: !Ref pEmrInstanceRootVolSize
+      CustomAmiId: !Ref pAmi
       Instances:
         #Required Parameter Name
         AdditionalMasterSecurityGroups:
