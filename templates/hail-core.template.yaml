@@ -40,6 +40,10 @@ Metadata:
         Parameters:
           - "pTagEnvironment"
           - "pTagOwner"
+      - Label:
+          default: "Service Catalog"
+        Parameters:
+          - "UseServiceCatalog"
     ParameterLabels:
       QSS3BucketName:
         default: Quick Start S3 bucket name
@@ -127,7 +131,7 @@ Parameters:
 
   pCreateSageMakerBucket:
     Type: "String"
-    Description: "Select No to use an existing bucket."
+    Description: "Select 'no' to use an existing bucket."
     AllowedValues:
       - "yes"
       - "no"
@@ -142,6 +146,14 @@ Parameters:
     Default: ""
     Description: "(Optional) Environment type for default resource tagging."
     Type: "String"
+
+  pUseServiceCatalog:
+    Type: "String"
+    Description: "Select 'no' to opt out of using Service Catalog for EMR & SageMaker Notebook deployments."
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "yes"
 
   pTagOwner:
     Type: "String"
@@ -207,6 +219,7 @@ Conditions:
 
     UsingDefaultBucket: !Equals [!Ref QSS3BucketName, "aws-quickstart"]
     UsingPermissionBoundary: !Equals [!Ref pUsePermissionBoundary, "yes"]
+    UsingServiceCatalog: !Equals [!Ref pUseServiceCatalog, "yes"]
     UsingIamPrefix: !Equals [!Ref pUseIamPrefix, "yes"]
     UsingIamSuffix: !Equals [!Ref pUseIamSuffix, "yes"]
 
@@ -256,6 +269,7 @@ Resources:
 
   stackServiceCatalog:
     Type: "AWS::CloudFormation::Stack"
+    Condition: UsingServiceCatalog
     Properties:
       TemplateURL:
         !Sub
@@ -552,6 +566,7 @@ Resources:
 Outputs:
 
   portfolio:
+    Condition: UsingServiceCatalog
     Description: "Service Catalog Portfolio"
     Value: !GetAtt stackServiceCatalog.Outputs.portfolio
 
