@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "EMR with Hail and VEP (qs-1qp776mgo)"
+Description: "EMR with Hail and VEP (qs-1qp776rr2)"
 
 
 Parameters:
@@ -648,6 +648,7 @@ Resources:
           UnitType: Instances
       Name: !Ref pClusterName
       ReleaseLabel: !Ref pEmrReleaseLabel
+      SecurityConfiguration: !Ref EmrSecurityConfiguration
       ServiceRole: !Ref roleEmr
       Steps:
         - ActionOnFailure: "CONTINUE"
@@ -962,7 +963,28 @@ Resources:
           Value: !Ref pTagEnvironment
         - Key: "owner"
           Value: !Ref pTagOwner
-
+  EmrSecurityConfiguration:
+    Type: "AWS::EMR::SecurityConfiguration"
+    Condition: "CondEnableEncryption"
+    Properties:
+      Name: #"emr-cluster-{UniqueId}-security-configuration"
+        !Sub
+          - 'emr-cluster-${UniqueId}-security-configuration'
+          - Prefix: !If [UsingIamPrefix, !Ref pIamPrefix, '']
+            Suffix: !If [UsingIamSuffix, !Ref pIamSuffix, '']
+            UniqueId: !Select [4, !Split ['-', !Select [2, !Split ['/', !Ref AWS::StackId]]]]
+      SecurityConfiguration:
+        EncryptionConfiguration:
+          AtRestEncryptionConfiguration:
+            S3EncryptionConfiguration:
+              EncryptionMode: "SSE-KMS"
+              AwsKmsKey: !Ref pKmsEbsArn
+            LocalDiskEncryptionConfiguration:
+              EncryptionKeyProviderType: "AwsKms"
+              AwsKmsKey: !Ref pKmsEbsArn
+              EnableEbsEncryption: true
+          EnableAtRestEncryption: true
+          EnableInTransitEncryption: false
 Outputs:
 
   url:

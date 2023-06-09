@@ -70,6 +70,7 @@ function hail_build
   git checkout "$HAIL_VERSION"
 
   JAVA_PATH=$(dirname "/usr/lib/jvm/java-1.8.0/include/.")
+  echo $JAVA_PATH
   if [ -z "$JAVA_PATH" ]; then
     echo "Java 8 was not found"
     exit 1

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Packer based Hail AMI Creation via AWS Codebuild. Adjust file paths in individual build Projects (qs-1qp776mdq)"
+Description: "Packer based Hail AMI Creation via AWS Codebuild. Adjust file paths in individual build Projects (qs-1qp776rr3)"
 
 Parameters:
 

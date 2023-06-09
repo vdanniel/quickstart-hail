@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "SageMaker Notebook Instance for use with Hail on EMR (qs-1qp776mht)"
+Description: "SageMaker Notebook Instance for use with Hail on EMR (qs-1qp776rr5)"
 
 Parameters:
 
