@@ -51,7 +51,7 @@ To deploy Hail on EMR, follow these steps:
 4. Navigate to the "templates" directory of your S3 bucket.  Find the file named "hail-master.template.yaml" and copy the S3 object URL.  Save this URL as we will use it to launch our solution.
    ![copy-template-url](docs/images/deployment/copy-template-url.png)
   
-5. Navigate to the [CloudFormation console]([https://console.aws.amazon.com/s3/](https://console.aws.amazon.com/cloudformation).
+5. Navigate to the [CloudFormation console](https://console.aws.amazon.com/cloudformation).
 
 6. Create a new stack using the S3 URL that you copied in step 4 as a template source.
    ![launch-template-with-url](docs/images/deployment/launch-template-with-url.png)
