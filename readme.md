@@ -51,48 +51,48 @@ To deploy Hail on EMR, follow these steps:
 4. Navigate to the "templates" directory of your S3 bucket.  Find the file named "hail-master.template.yaml" and copy the S3 object URL.  Save this URL as we will use it to launch our solution.
    ![copy-template-url](docs/images/deployment/copy-template-url.png)
   
-5. Navigate to the [CloudFormation console]([https://console.aws.amazon.com/s3/](https://console.aws.amazon.com/cloudformation)).
+5. Navigate to the [CloudFormation console]([https://console.aws.amazon.com/s3/](https://console.aws.amazon.com/cloudformation).
 
 6. Create a new stack using the S3 URL that you copied in step 4 as a template source.
    ![launch-template-with-url](docs/images/deployment/launch-template-with-url.png)
 
-4. Set parameters based on your environment requirements. This CloudFormation template includes an **optional** *Identity and Access Management* section where you can set a permission boundary as well custom prefixes/suffixes to be used with all IAM role and policy names created by the templates.  Check with your IT administrator if this is required in your AWS environment.  Once all parameters are set, choose *Next*.
+7. Set parameters based on your environment requirements. This CloudFormation template includes an **optional** *Identity and Access Management* section where you can set a permission boundary as well custom prefixes/suffixes to be used with all IAM role and policy names created by the templates.  Check with your IT administrator if this is required in your AWS environment.  Once all parameters are set, choose *Next*.
 
-5. Optionally configure stack options and choose *Next*.
+8. Optionally configure stack options and choose *Next*.
 
-6. Review your settings and acknowledge the stack capabilities. Choose *Create Stack*.
+9. Review your settings and acknowledge the stack capabilities. Choose *Create Stack*.
 
     ![cloudformation-capabilities](docs/images/deployment/cloudformation-capabilities.png)
 
-7. Once stack creation is complete, select the root stack and open the *Outputs* tab.  Locate and choose the Service Catalog Portfolio URL.
+10. Once stack creation is complete, select the root stack and open the *Outputs* tab.  Locate and choose the Service Catalog Portfolio URL.
 
     ![cloudformation-primary-stack-outputs](docs/images/deployment/cloudformation-primary-stack-outputs.png)
 
-8. The Service Catalog Portfolio requires assignment to specific Users, Groups, or Roles.  Select the `Users, Groups, or Roles` tab and click `Add groups, roles, users`.
+11. The Service Catalog Portfolio requires assignment to specific Users, Groups, or Roles.  Select the `Users, Groups, or Roles` tab and click `Add groups, roles, users`.
 
     ![service-catalog-assignment](docs/images/deployment/service-catalog-assignment.png)
 
-9. Select the users, groups, and/or roles that will be allowed to deploy the Hail EMR cluster and SageMaker notebook instances.  When complete, click `Add Access`.
+12. Select the users, groups, and/or roles that will be allowed to deploy the Hail EMR cluster and SageMaker notebook instances.  When complete, click `Add Access`.
 
     ![service-catalog-assignment-2](docs/images/deployment/service-catalog-assignment-2.png)
 
-10. The selected users, groups, or roles can now click `Products` in the Service Catalog console.
+13. The selected users, groups, or roles can now click `Products` in the Service Catalog console.
 
     ![service-catalog-products](docs/images/deployment/service-catalog-products.png)
 
-11. Launch a Hail EMR Cluster using your custom Hail AMI built from the [Building AMIs](#building-amis) section to get started. **Note: Building custom AMI is required before launching EMR cluster.**
+14. Launch a Hail EMR Cluster using your custom Hail AMI built from the [Building AMIs](#building-amis) section to get started. **Note: Building custom AMI is required before launching EMR cluster.**
 
     ![service-catalog-launch](docs/images/deployment/service-catalog-launch.png)
 
-12. Launch a Hail SageMaker Notebook Instance.  Once the SageMaker Notebook Instance is provisioned open the Console Notebook URL.  This will bring you to the SageMaker console for your specific notebook instance.
+15. Launch a Hail SageMaker Notebook Instance.  Once the SageMaker Notebook Instance is provisioned open the Console Notebook URL.  This will bring you to the SageMaker console for your specific notebook instance.
 
     ![service-catalog-sagemaker-console](docs/images/deployment/service-catalog-sagemaker-console.png)
 
-13. Select `Open JupyterLab`.
+16. Select `Open JupyterLab`.
 
     ![sagemaker-open](docs/images/deployment/sagemaker-open.png)
 
-14. Inside your notebook server, note that there is a `common-notebooks` directory.  This directory contains tutorial notebooks to get started interacting with your Hail EMR cluster.
+17. Inside your notebook server, note that there is a `common-notebooks` directory.  This directory contains tutorial notebooks to get started interacting with your Hail EMR cluster.
 
     ![sagemaker-common-notebooks](docs/images/deployment/sagemaker-common-notebooks.gif)
 
