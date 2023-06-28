@@ -3,7 +3,6 @@ Description: "EMR with Hail and VEP (qs-1qp776rr2)"
 
 
 Parameters:
-
   pAmi:
     Description: "(Required) Custom Hail AMI."
     Type: "String"
