@@ -631,11 +631,7 @@ Resources:
         TaskInstanceGroups:
           !If
           - CondCreateTaskNodes
-          -
-            InstanceCount: !Ref pEmrTargetTaskNodeCount
-            InstanceType: !Ref pEmrTaskNodeSize
-            Market: !Ref pTaskNodeMarket
-            Name: "Task Instance Group"
+          - !Ref TaskInstanceGroup
           - !Ref "AWS::NoValue"
         TerminationProtected: !Ref pEmrInstanceTerminationProtection
       JobFlowRole: !Ref instanceProfileEmrEc2
@@ -717,6 +713,17 @@ Resources:
         - Key: "allow-emr-ssm"
           Value: !Ref pAllowSsmShell
       VisibleToAllUsers: true
+      
+  TaskInstanceGroup:
+    Type: 'AWS::EMR::InstanceGroupConfig'
+    Properties:
+      InstanceRole: TASK
+      InstanceCount: !Ref pEmrTargetTaskNodeCount
+      InstanceType: !Ref pEmrTaskNodeSize
+      Market: !Ref pTaskNodeMarket
+      JobFlowId: 
+        Ref: cluster
+      Name: "Task Instance Group"
 
   instanceProfileEmrEc2:
     Type: "AWS::IAM::InstanceProfile"

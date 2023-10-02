@@ -5,11 +5,12 @@ phases:
     commands:
       - CODEBUILD_PROJECT_NAME=$(echo $CODEBUILD_BUILD_ID | cut -d ':' -f 1)
       - apk add curl bash git
-      - curl -O https://releases.hashicorp.com/packer/1.7.4/packer_1.7.4_linux_amd64.zip
-      - unzip packer_1.7.4_linux_amd64.zip
+      - curl -O https://releases.hashicorp.com/packer/1.9.4/packer_1.9.4_linux_amd64.zip
+      - unzip packer_1.9.4_linux_amd64.zip -o
       - mv packer /usr/bin/
-      - chmod 700 build-wrapper.sh scripts/*
+      - rm packer_1.9.4_linux_amd64.zip
+      - chmod 700 build-wrapper.sh scripts/* /usr/bin/packer
 
   build:
     commands:
-      - sh build-wrapper.sh
+      - ./build-wrapper.sh
