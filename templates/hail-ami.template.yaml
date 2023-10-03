@@ -203,7 +203,7 @@ Resources:
             Value: "build.vars"
           - Name: "HAIL_VERSION"
             Type: "PLAINTEXT"
-            Value: "0.2.XX"
+            Value: "0.2.105"
           - Name: "HTSLIB_VERSION"
             Type: "PLAINTEXT"
             Value: !Ref pHtslibVersion
@@ -262,7 +262,7 @@ Resources:
             Value: "build.vars"
           - Name: "HAIL_VERSION"
             Type: "PLAINTEXT"
-            Value: "0.2.xx"
+            Value: "0.2.105"
           - Name: "HTSLIB_VERSION"
             Type: "PLAINTEXT"
             Value: !Ref pHtslibVersion

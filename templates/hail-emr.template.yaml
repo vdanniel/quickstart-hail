@@ -628,11 +628,6 @@ Resources:
                   SizeInGB: !Ref pEmrCoreInstanceDataVolSize
                   VolumeType: "gp2"
                 VolumesPerInstance: 1
-        TaskInstanceGroups:
-          !If
-          - CondCreateTaskNodes
-          - !Ref TaskInstanceGroup
-          - !Ref "AWS::NoValue"
         TerminationProtected: !Ref pEmrInstanceTerminationProtection
       JobFlowRole: !Ref instanceProfileEmrEc2
       LogUri: !Join ["", ["s3://", !Ref pHailBucket, "/elasticmapreduce/"]]
