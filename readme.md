@@ -1,4 +1,4 @@
-# Hail on EMR
+# Integrating Hail on EMR
 
 This solution was designed to provide a reproducible, easy to deploy environment to integrate [Hail](https://hail.is) with [AWS EMR](https://aws.amazon.com/emr/faqs/?nc=sn&loc=7).  Where possible, AWS native tools have been used.
 
@@ -48,7 +48,7 @@ To deploy Hail on EMR, follow these steps:
 3. Download the contents of this repository, unzip, and place the downloaded contents into the "quickstart-hail" directory in your S3 bucket. Your final result should look the following:
   ![bucket-contents](docs/images/deployment/bucket-contents.png)
 
-4. Navigate to the "templates" directory of your S3 bucket.  Find the file named "hail-master.template.yaml" and copy the S3 object URL.  Save this URL as we will use it to launch our solution.
+4. Navigate to the "templates" directory of your S3 bucket.  Find the file named "hail-launcher.template.yaml" and copy the S3 object URL.  Save this URL as we will use it to launch our solution.
    ![copy-template-url](docs/images/deployment/copy-template-url.png)
   
 5. Navigate to the [CloudFormation console](https://console.aws.amazon.com/cloudformation).
