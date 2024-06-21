@@ -24,6 +24,7 @@ cd /opt
 git clone "$REPOSITORY_URL"
 cd samtools
 git checkout "$SAMTOOLS_VERSION"
+#git checkout "1.20"
 autoheader
 autoconf -Wno-syntax
 ./configure --with-htslib="$HTSLIB_DIR"
