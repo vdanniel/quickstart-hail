@@ -37,8 +37,5 @@ git checkout "$HTSLIB_VERSION"
 git submodule update --init --recursive
 autoreconf -i  # Build the configure script and install files it uses
 ./configure    # Optional but recommended, for choosing extra functionality
-#autoheader
-#autoconf
-#./configure
 make -j "$(grep -c ^processor /proc/cpuinfo)"
 make install
