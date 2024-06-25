@@ -33,7 +33,7 @@ cd /opt
 git clone "$REPOSITORY_URL"
 cd htslib
 git checkout "$HTSLIB_VERSION"
-#git checkout "1.20"
+
 git submodule update --init --recursive
 autoreconf -i  # Build the configure script and install files it uses
 ./configure    # Optional but recommended, for choosing extra functionality
