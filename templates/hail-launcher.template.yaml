@@ -87,9 +87,9 @@ Metadata:
       IamPrefix:
         default: "Prefix to use for roles and policies"
       UseIamSuffix:
-        default: "Use prefix for roles and policies"
+        default: "Use suffix for roles and policies"
       IamSuffix:
-        default: "Prefix to use for roles and policies"
+        default: "Suffix to use for roles and policies"
 
 Parameters:
 
