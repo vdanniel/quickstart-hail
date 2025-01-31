@@ -3,8 +3,18 @@
 # Generate cluster details and move to S3 for ease of replication
 #
 
-export AMI=$(curl -s http://169.254.169.254/latest/meta-data/ami-id/)
-export INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id/)
+#Check IMDSv1 or IMDSv2 is being used on the instance
+status_code=$(curl -s -o /dev/null -w "%{http_code}" http://169.254.169.254/latest/meta-data/)
+if [[ "$status_code" -eq 200 ]]
+then
+    export AMI=$(curl -s http://169.254.169.254/latest/meta-data/ami-id/)
+    export INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id/)
+else
+    export TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+    export AMI=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/ami-id/)
+    export INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-id/)
+fi
+
 export MANIFEST_S3_BUCKET=$(aws ssm get-parameter --name /hail/s3/hail --query 'Parameter.Value' --output text)
 export MANIFEST_S3_PATH="/cluster-manifests/"
 MANIFEST_DIRECTORY="/tmp/manifest"
