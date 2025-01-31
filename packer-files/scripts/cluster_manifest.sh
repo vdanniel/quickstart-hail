@@ -32,7 +32,7 @@ CLUSTER_ID=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
 aws emr describe-cluster --cluster-id "$CLUSTER_ID" > "$MANIFEST_DIRECTORY/cluster.json"
 
 MASTER_SG_ID=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
-    --query 'Reservations[].Instances[].SecurityGroups[?starts_with(GroupName, `emr-master-`) == `true`].GroupId' \
+    --query 'Reservations[].Instances[].SecurityGroups[?starts_with(GroupName, `emr-primary-`) == `true`].GroupId' \
     --output text)
 
 PARENT_CF_STACK_ID=$(aws ec2 describe-security-groups --group-ids "$MASTER_SG_ID" \
